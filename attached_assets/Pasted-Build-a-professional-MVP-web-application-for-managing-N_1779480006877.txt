@@ -1,0 +1,609 @@
+Build a professional MVP web application for managing New Mexico IPRA public records requests.
+
+====================================================
+TECH STACK
+====================================================
+
+Frontend:
+- Next.js with TypeScript
+- Tailwind CSS
+
+Backend:
+- FastAPI with Python
+
+Database:
+- PostgreSQL
+
+ORM:
+- SQLAlchemy
+
+Database migrations:
+- Alembic
+
+Authentication:
+- FastAPI JWT authentication
+- bcrypt/passlib for password hashing
+
+File upload:
+- Local storage for MVP
+- backend/uploads/
+
+AI:
+- OpenAI API OR placeholder AI service
+
+Deployment:
+- Replit for MVP
+
+Do NOT use Supabase for this MVP.
+
+====================================================
+PROBLEM OVERVIEW
+====================================================
+
+Build a system that helps users:
+
+1. Create public records requests
+2. Improve request wording using AI
+3. Prepare requests for submission
+4. Track statutory deadlines
+5. Store returned records
+6. Summarize uploaded records
+7. Suggest follow-up requests
+
+====================================================
+CORE WORKFLOW
+====================================================
+
+1. User creates request
+2. AI improves request draft
+3. App stores request
+4. User reviews request
+5. User submits request outside the app using the agency's preferred method:
+   - email
+   - portal
+   - mail
+   - other
+
+6. User returns to app
+7. User marks request as submitted
+8. App calculates deadlines
+9. App displays reminder information
+10. User uploads returned records
+11. AI summarizes records
+12. AI suggests follow-up requests
+
+====================================================
+IMPORTANT IPRA RULES
+====================================================
+
+Implement ONLY these rules:
+
+- Records should be made available immediately or as soon as practicable.
+
+- Records should be made available no later than 15 calendar days after receipt.
+
+- If records are not available within 3 business days, the agency should provide a written response explaining when records will be available or when it will respond.
+
+Do NOT hallucinate or invent legal rules beyond these.
+
+====================================================
+ARCHITECTURE REQUIREMENTS
+====================================================
+
+Maintain clean separation between:
+
+- frontend UI
+- FastAPI routes
+- database models
+- Pydantic schemas
+- authentication logic
+- deadline logic
+- AI service logic
+- upload/storage logic
+
+====================================================
+PROJECT STRUCTURE
+====================================================
+
+frontend/
+    app/
+    components/
+    lib/
+    types/
+
+backend/
+    main.py
+    database.py
+    models/
+    schemas/
+    routers/
+    services/
+    utils/
+    uploads/
+    alembic/
+    alembic.ini
+    requirements.txt
+
+docs/
+    architecture.md
+    api_contract.md
+    setup.md
+
+====================================================
+DATABASE TABLES
+====================================================
+
+users
+
+agencies
+
+ipra_requests
+
+request_versions
+
+deadlines
+
+uploaded_documents
+
+document_summaries
+
+follow_up_suggestions
+
+reminders
+
+====================================================
+DATABASE BEHAVIOR
+====================================================
+
+If a user edits a request:
+
+- Update the existing ipra_requests record
+- Save prior state in request_versions
+- Do NOT create duplicate requests
+
+====================================================
+AUTHENTICATION REQUIREMENTS
+====================================================
+
+Implement:
+
+Signup
+
+Login
+
+JWT access tokens
+
+Password hashing with bcrypt/passlib
+
+Protect routes:
+
+Users should only access their own requests/documents.
+
+Use environment variables:
+
+DATABASE_URL
+
+JWT_SECRET_KEY
+
+OPENAI_API_KEY
+
+Never hardcode secrets.
+
+====================================================
+PAGES
+====================================================
+
+1. Landing page
+
+2. Signup page
+
+3. Login page
+
+4. Dashboard
+
+5. Create Request page
+
+6. Request Detail page
+
+7. Edit Request page
+
+8. Deadline Tracker page
+
+9. Upload Documents page
+
+10. Document Summary page
+
+====================================================
+GUI / UI REQUIREMENTS
+====================================================
+
+Create a clean, professional, elegant interface.
+
+Target audience:
+
+- journalists
+- researchers
+- legal professionals
+- policy analysts
+- civic users
+
+Visual style:
+
+- modern SaaS dashboard
+- soft neutral background
+- white cards
+- subtle borders
+- rounded corners
+- clean typography
+- professional spacing
+- readable font sizes
+- status badges
+- calm accent colors
+- no flashy colors
+- uncluttered layouts
+- responsive for desktop and tablet
+
+Interaction requirements:
+
+- guided workflow
+- inline validation
+- confirmation dialogs
+- toast notifications
+- progress indicators
+- minimal required inputs
+- intuitive navigation
+
+====================================================
+DASHBOARD
+====================================================
+
+Display:
+
+- Total requests
+- Draft requests
+- Submitted requests
+- Upcoming 3-business-day deadlines
+- Upcoming 15-calendar-day deadlines
+- Overdue requests
+- Recent uploaded documents
+
+====================================================
+REQUEST STATUS VALUES
+====================================================
+
+draft
+
+ready_to_submit
+
+submitted
+
+awaiting_response
+
+records_received
+
+closed
+
+overdue
+
+====================================================
+REQUEST SUBMISSION UX FLOW
+====================================================
+
+A request MUST NOT automatically become submitted.
+
+Workflow:
+
+User creates request
+
+↓
+
+User reviews request
+
+↓
+
+User submits outside app
+
+↓
+
+User returns
+
+↓
+
+User clicks:
+
+[Mark as Submitted]
+
+Open confirmation modal:
+
+Submission Method:
+
+- Email
+- Online portal
+- Mail
+- Phone
+- Other
+
+Submission Date:
+
+Date picker
+
+Default:
+
+today
+
+Optional notes:
+
+Examples:
+
+"Submitted to records@agency.gov"
+
+"Submitted through agency portal"
+
+Buttons:
+
+[Cancel]
+
+[Confirm Submission]
+
+On confirmation:
+
+Update database:
+
+status = submitted
+
+submitted_date
+
+submission_method
+
+submission_notes
+
+Then automatically:
+
+- calculate 3-business-day deadline
+- calculate 15-calendar-day deadline
+- update dashboard
+- update status indicators
+
+Show message:
+
+"Request marked as submitted. Deadline tracking has started."
+
+====================================================
+FASTAPI ENDPOINTS
+====================================================
+
+Authentication:
+
+POST /auth/signup
+
+POST /auth/login
+
+GET /auth/me
+
+Requests:
+
+POST /requests
+
+GET /requests
+
+GET /requests/{request_id}
+
+PUT /requests/{request_id}
+
+DELETE /requests/{request_id}
+
+POST /requests/{request_id}/mark-submitted
+
+Deadlines:
+
+GET /requests/{request_id}/deadlines
+
+POST /requests/{request_id}/calculate-deadlines
+
+Documents:
+
+POST /requests/{request_id}/documents/upload
+
+GET /requests/{request_id}/documents
+
+GET /documents/{document_id}
+
+AI:
+
+POST /ai/improve-request
+
+POST /ai/summarize-document
+
+POST /ai/suggest-followups
+
+====================================================
+DEADLINE SERVICE
+====================================================
+
+Create separate service:
+
+deadline_service.py
+
+Rules:
+
+3-business-day:
+- skip weekends
+
+15-calendar-day:
+- include weekends
+
+Ignore holidays for MVP
+
+Add TODO:
+
+Future state holiday support
+
+Display:
+
+deadline calculation details
+
+====================================================
+AI REQUIREMENTS
+====================================================
+
+Create separate functions:
+
+improve_request_draft()
+
+summarize_document()
+
+suggest_follow_up_requests()
+
+If API key missing:
+
+Do NOT break app
+
+Return placeholder responses
+
+Clearly label:
+
+"Demo output"
+
+====================================================
+AI SAFETY
+====================================================
+
+AI should:
+
+- not provide legal advice
+- not fabricate facts
+- not claim certainty
+- explain limitations
+- say "not found in document" if data missing
+- summarize uploaded documents only
+- identify:
+    - key dates
+    - entities
+    - major topics
+    - follow-up ideas
+
+UI disclaimer:
+
+"This tool helps draft and track public records requests but does not provide legal advice."
+
+====================================================
+TESTING DATA
+====================================================
+
+Use ONLY synthetic data.
+
+Do NOT use:
+
+- real agencies
+- real people
+- real emails
+- real addresses
+- confidential documents
+
+Mock agencies:
+
+- New Mexico Department of Sample Services
+- City of Demo Records Office
+- Sample County Clerk's Office
+
+Mock documents:
+
+- sample email thread
+- sample memo
+- sample meeting notes
+- sample invoice
+- sample PDF text
+
+Label:
+
+"FOR TESTING ONLY — SYNTHETIC SAMPLE RECORD"
+
+====================================================
+LOCAL STORAGE
+====================================================
+
+Store files:
+
+backend/uploads/
+
+Store metadata only:
+
+file_name
+
+file_path
+
+file_size
+
+file_type
+
+uploaded_at
+
+request_id
+
+user_id
+
+Add TODO:
+
+Replace with cloud object storage in production
+
+====================================================
+DEVELOPMENT PHASES
+====================================================
+
+Phase 1:
+
+- App shell
+- Professional frontend UI
+- Mock dashboard
+- Request CRUD
+- Request workflow
+- Mark-as-submitted flow
+- Deadline calculation logic
+- Synthetic data
+- Setup documentation
+
+Phase 2:
+
+- PostgreSQL connection
+- SQLAlchemy models
+- Alembic migrations
+- JWT auth
+
+Phase 3:
+
+- AI draft improvement
+
+Phase 4:
+
+- Document upload
+- Metadata storage
+- AI summarization
+
+Phase 5:
+
+- Follow-up suggestions
+- Reminder system
+
+====================================================
+IMPORTANT
+====================================================
+
+Implement ONLY Phase 1 right now.
+
+Do NOT implement future phases yet.
+
+Create clean placeholders and TODO comments for future phases.
+
+Do not add extra features outside MVP scope.
+
+Keep code modular, readable, and well commented.
+
+Generate:
+
+1. Project structure
+2. Frontend pages/components
+3. Backend structure
+4. Deadline logic
+5. Mock data
+6. Setup instructions
+7. TODO comments

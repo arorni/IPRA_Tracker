@@ -1,0 +1,197 @@
+Please revise the current IPRA Tracker app based on the correct workflow and the screenshots.
+
+Do not rebuild the whole app from scratch. Keep the current layout, sidebar, dashboard style, cards, and clean professional UI. Only fix the workflow, statuses, labels, and interactions.
+
+Correct request workflow:
+
+Draft
+↓
+AI Improve
+↓
+User reviews/accepts/edits AI suggestion
+↓
+Ready to Submit
+↓
+User submits outside the app by email/portal/mail
+↓
+User returns and clicks Mark as Submitted
+↓
+Submission confirmation modal
+↓
+Deadlines start tracking
+↓
+Records Received
+↓
+Closed
+
+Important status rules:
+
+1. Draft
+Use when the request is still incomplete or not finalized.
+
+2. Ready to Submit
+Use only after the user has reviewed/finalized the request.
+This does NOT mean the request has been submitted to the agency.
+Do NOT calculate deadlines at this stage.
+
+3. Submitted
+Use only after the user clicks Mark as Submitted and confirms:
+- submission method
+- submission date
+- optional notes
+
+Only after this confirmation should deadline tracking begin.
+
+4. Records Received
+Use when the user confirms that the agency returned records/documents.
+
+5. Closed
+Use when the user is done with the request.
+
+6. Overdue
+Do NOT make Overdue a manual status.
+Overdue should be calculated automatically based on deadlines.
+
+Remove “Awaiting Response” as a separate manual status.
+If needed, show “Awaiting agency response” as a sub-label under Submitted.
+
+Update Create/Edit Request page:
+
+Current buttons:
+- Save as Draft
+- Mark Ready to Submit
+
+Revise behavior:
+
+Show buttons:
+- Save Draft
+- AI Improve
+- Mark as Ready
+
+Rules:
+- AI Improve should generate a suggested improved version.
+- User must be able to review the AI suggestion before accepting.
+- Provide buttons:
+  - Accept AI Version
+  - Keep Original
+  - Edit Manually
+
+Only after the user accepts or manually finalizes the text should they be able to click Mark as Ready.
+
+Mark as Ready should:
+- set status = ready_to_submit
+- NOT calculate deadlines
+- show message: “Request marked as ready. Submit it using the agency’s preferred method, then return here to mark it as submitted.”
+
+Update Request Detail page:
+
+For status = ready_to_submit, show:
+- Copy Request
+- Preview Email
+- Mark as Submitted
+
+When user clicks Mark as Submitted:
+Open confirmation modal with:
+
+Submission Method:
+- Email
+- Online portal
+- Mail
+- Phone
+- Other
+
+Submission Date:
+- date picker
+- default = today
+
+Optional Notes:
+Examples:
+- Submitted to records@agency.gov
+- Submitted through agency portal
+
+Buttons:
+- Cancel
+- Confirm Submission
+
+On Confirm Submission:
+- status = submitted
+- save submitted_date
+- save submission_method
+- save submission_notes
+- calculate 3-business-day deadline
+- calculate 15-calendar-day deadline
+- update dashboard
+- show message: “Request marked as submitted. Deadline tracking has started.”
+
+Deadline rules:
+- 3-business-day deadline skips weekends
+- 15-calendar-day deadline includes weekends
+- ignore holidays for MVP
+- add TODO for future state holiday support
+
+Update dashboard:
+
+Dashboard cards should show:
+- Total Requests
+- Drafts
+- Ready to Submit
+- Submitted
+- Records Received
+- Overdue
+
+Do not count Overdue as a separate status if the request is still submitted.
+Overdue should be a calculated badge/filter.
+
+Update My Requests filters:
+
+Use:
+- All
+- Draft
+- Ready to Submit
+- Submitted
+- Records Received
+- Closed
+- Overdue
+
+Remove:
+- Awaiting Response
+
+Update Deadline Tracker:
+
+Only show deadlines for requests with status:
+- submitted
+- records_received
+- closed if needed for history
+
+Do NOT show deadline cards for draft or ready_to_submit requests.
+
+For overdue:
+- If 3-business-day deadline passed and no response/records logged, show “3-day response overdue.”
+- If 15-calendar-day deadline passed and records not received, show “15-day production overdue.”
+
+If records are received:
+- Do not show as actively overdue unless received after deadline.
+- Show historical deadline status separately if needed.
+
+Update Documents page:
+
+Since document upload is Phase 4, current placeholder is fine.
+But add note:
+“Documents become available after a request is marked as submitted and records are received.”
+
+Keep UI professional:
+- clean SaaS dashboard
+- soft neutral background
+- white cards
+- subtle borders
+- rounded corners
+- clear status badges
+- no clutter
+- responsive layout
+
+Do not implement backend Phase 2 yet unless already present.
+For now, update Phase 1 mock-data behavior and frontend state transitions correctly.
+
+Do not add new legal rules.
+Do not auto-submit requests to agencies.
+Do not calculate deadlines before Mark as Submitted confirmation.

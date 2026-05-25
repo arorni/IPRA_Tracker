@@ -1,0 +1,167 @@
+I want to build a professional MVP web app for managing New Mexico IPRA public records requests.
+
+Problem overview:
+The app helps users create, draft, submit/prepare, track, store, summarize, and follow up on New Mexico Inspection of Public Records Act (IPRA) requests.
+
+Core workflow for v1:
+1. User creates a public records request.
+2. AI helps improve the request draft.
+3. App stores the request.
+4. User manually submits the request outside the app or by email.
+5. User marks the request as submitted.
+6. App calculates and tracks:
+   - 3 business day response deadline
+   - 15 calendar day production deadline
+7. App shows deadline status and reminders.
+8. User uploads returned records/documents.
+9. AI summarizes uploaded records.
+10. AI suggests possible follow-up requests.
+
+Important IPRA timing rules to encode:
+- Records should be made available immediately or as soon as practicable.
+- Records should be made available no later than 15 calendar days after receipt.
+- If records are not available within 3 business days, the agency should provide a written response explaining when records will be available or when it will respond.
+
+Tech stack:
+- Frontend: Next.js with TypeScript
+- Styling: Tailwind CSS
+- Backend API: FastAPI with Python
+- Database/Auth/Storage: Supabase
+- AI: OpenAI API or placeholder AI service function for now
+- Deployment-ready structure
+
+Architecture requirement:
+Create a clean separation between:
+- frontend UI
+- backend API logic
+- database operations
+- AI service logic
+- deadline calculation logic
+
+Do not put everything in one file.
+
+Recommended folder structure:
+frontend/
+  app/
+  components/
+  lib/
+  types/
+backend/
+  main.py
+  routers/
+  services/
+  models/
+  utils/
+  requirements.txt
+docs/
+  architecture.md
+  api_contract.md
+  setup.md
+
+Core database tables:
+- users
+- agencies
+- ipra_requests
+- request_versions
+- deadlines
+- uploaded_documents
+- document_summaries
+- follow_up_suggestions
+- reminders
+
+Important database behavior:
+If a user edits a request, do not create a brand-new request every time.
+Update the main ipra_requests record and optionally store the previous version in request_versions for audit/history.
+
+Frontend pages:
+1. Landing page
+2. Dashboard
+3. Create Request page
+4. Request Detail page
+5. Edit Request page
+6. Deadline Tracker page
+7. Upload Documents page
+8. Document Summary page
+
+UI design requirements:
+Build a clean, professional, elegant interface.
+Use a modern dashboard layout.
+Use soft neutral colors, readable typography, clear spacing, cards, badges, and status indicators.
+The app should feel suitable for journalists, researchers, legal professionals, and civic users.
+Avoid cluttered UI.
+Use Tailwind CSS consistently.
+Make it responsive for desktop and tablet.
+
+Dashboard should show:
+- Total requests
+- Draft requests
+- Submitted requests
+- Upcoming 3-business-day deadlines
+- Upcoming 15-calendar-day deadlines
+- Overdue requests
+- Recent uploaded documents
+
+Request statuses:
+- draft
+- ready_to_submit
+- submitted
+- awaiting_response
+- records_received
+- closed
+- overdue
+
+Backend FastAPI requirements:
+Create API endpoints for:
+- create request
+- update request
+- get all requests
+- get request by id
+- mark request as submitted
+- calculate deadlines
+- upload document metadata
+- summarize document
+- generate follow-up suggestions
+
+Deadline logic:
+Create a separate deadline service.
+3-business-day deadline should skip weekends.
+15-calendar-day deadline should include weekends.
+For now, ignore state holidays but leave a clear TODO comment for future holiday support.
+
+AI requirements:
+Create separate AI service functions:
+- improve_request_draft()
+- summarize_document()
+- suggest_follow_up_requests()
+
+If OpenAI key is not configured, return a safe placeholder response instead of breaking the app.
+
+Security and reliability:
+- Use environment variables for API keys and Supabase credentials.
+- Do not hardcode secrets.
+- Add basic validation.
+- Add error handling.
+- Add clear comments where assumptions are made.
+- Do not hallucinate legal advice.
+- Display a disclaimer: “This tool helps draft and track public records requests but does not provide legal advice.”
+
+Development approach:
+Build this in phases.
+Phase 1: App shell, dashboard, request CRUD, deadline calculation.
+Phase 2: Supabase integration.
+Phase 3: AI draft improvement.
+Phase 4: document upload and summarization.
+Phase 5: reminders and follow-up suggestions.
+
+For now, implement Phase 1 fully with mock data where needed, but structure the code so Supabase and AI can be connected later.
+
+Please generate:
+1. The project structure
+2. The frontend pages/components
+3. The FastAPI backend structure
+4. Deadline calculation logic
+5. Mock data for testing
+6. Clear setup instructions
+7. TODO comments for future Supabase, AI, and reminder integrations
+
+Do not add features outside this scope unless they are necessary for the MVP.
