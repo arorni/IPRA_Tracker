@@ -6,12 +6,17 @@ Phase 1: Mock data, no real database or auth
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
+from database import Base, engine
+from models.request import IPRARequest
+from models.user import User
 from routers import auth, requests, deadlines, documents, ai
+
+Base.metadata.create_all(bind=engine)
 
 app = FastAPI(
     title="IPRA Request Manager API",
     description="New Mexico IPRA Public Records Request Management",
-    version="0.1.0",
+    version="0.2.0",
 )
 
 # Allow frontend dev server

@@ -1,12 +1,17 @@
 """
 Database configuration.
-TODO Phase 2: Replace with real PostgreSQL + SQLAlchemy connection.
-
+Phase 2: Replace with real PostgreSQL + SQLAlchemy connection.
+"""
+import os
+from dotenv import load_dotenv
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker, DeclarativeBase
-import os
 
-DATABASE_URL = os.environ.get("DATABASE_URL", "postgresql://user:pass@localhost/ipra")
+load_dotenv()
+DATABASE_URL = os.getenv("DATABASE_URL", "postgresql://user:pass@localhost/ipra")
+
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is not set. Please add it to backend/.env")
 
 engine = create_engine(DATABASE_URL)
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
@@ -20,9 +25,3 @@ def get_db():
         yield db
     finally:
         db.close()
-"""
-
-# Phase 1: no-op placeholder
-def get_db():
-    """Phase 2: yields a real SQLAlchemy session."""
-    pass

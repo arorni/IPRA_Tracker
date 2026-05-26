@@ -69,3 +69,6 @@ class IPRARequestOut(BaseModel):
     three_day_deadline: Optional[date]
     fifteen_day_deadline: Optional[date]
     is_overdue: bool
+    model_config = {
+    "from_attributes": True
+    }
