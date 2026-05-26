@@ -14,3 +14,6 @@ frontend/.next/
 # OS files
 .DS_Store
 Thumbs.db
+
+# Frontend environment files
+frontend/.env.local
