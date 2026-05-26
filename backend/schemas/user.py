@@ -1,27 +1,28 @@
 """
 Pydantic schemas for users and authentication.
-TODO Phase 2: Wire to real database and JWT.
 """
+from pydantic import BaseModel, EmailStr, Field
 
-from pydantic import BaseModel, EmailStr
-from typing import Optional
 
 
 class UserSignup(BaseModel):
-    email: str
-    password: str
+    email: EmailStr
+    password: str = Field(min_length=8, max_length=64)
     full_name: str
 
 
 class UserLogin(BaseModel):
-    email: str
+    email: EmailStr
     password: str
 
 
 class UserOut(BaseModel):
     id: str
-    email: str
+    email: EmailStr
     full_name: str
+    model_config = {
+        "from_attributes": True
+    }
 
 
 class TokenResponse(BaseModel):

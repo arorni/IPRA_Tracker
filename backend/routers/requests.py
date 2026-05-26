@@ -7,9 +7,11 @@ from sqlalchemy.orm import Session
 from typing import List
 from datetime import datetime
 import uuid
+from models.user import User
 
 from database import get_db
 from models.request import IPRARequest
+from dependencies.auth import get_current_user
 
 
 from schemas.request import IPRARequestCreate, IPRARequestUpdate, IPRARequestOut, MarkSubmittedInput
@@ -27,17 +29,17 @@ def _to_out(r: dict) -> IPRARequestOut:
 """
 
 @router.get("", response_model=List[IPRARequestOut])
-def list_requests(db: Session=Depends(get_db)):
+def list_requests(db: Session=Depends(get_db), current_user: User = Depends(get_current_user)):
     """Return all requests for the current user."""
-    return db.query(IPRARequest).all()
+    return db.query(IPRARequest).filter(IPRARequest.user_id == current_user.id).all()
 
 
 @router.post("", response_model=IPRARequestOut, status_code=201)
-def create(data: IPRARequestCreate, db: Session = Depends(get_db)):
+def create(data: IPRARequestCreate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Create a new IPRA request as a draft."""
     record = IPRARequest(
         id=str(uuid.uuid4()),
-        user_id="user-001", #temporary untl real auth is implemented
+        user_id= current_user.id,
         status="draft",
         created_at=datetime.utcnow(),
         updated_at=datetime.utcnow(),
@@ -51,9 +53,9 @@ def create(data: IPRARequestCreate, db: Session = Depends(get_db)):
     return record
 
 @router.get("/{request_id}", response_model=IPRARequestOut)
-def get_one(request_id: str, db: Session = Depends(get_db)):
+def get_one(request_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Get a single request by ID."""
-    req = db.query(IPRARequest).filter(IPRARequest.id == request_id).first()
+    req = db.query(IPRARequest).filter(IPRARequest.id == request_id, IPRARequest.user_id == current_user.id).first()
 
     if not req:
         raise HTTPException(status_code=404, detail="Request not found.")
@@ -61,11 +63,11 @@ def get_one(request_id: str, db: Session = Depends(get_db)):
 
 
 @router.put("/{request_id}", response_model=IPRARequestOut)
-def update(request_id: str, data: IPRARequestUpdate, db: Session = Depends(get_db)):
+def update(request_id: str, data: IPRARequestUpdate, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     Update an existing request.
     """
-    req = db.query(IPRARequest).filter(IPRARequest.id == request_id).first()
+    req = db.query(IPRARequest).filter(IPRARequest.id == request_id, IPRARequest.user_id == current_user.id).first()
 
     if not req:
         raise HTTPException(status_code=404, detail="Request not found.")
@@ -102,9 +104,9 @@ def update(request_id: str, data: IPRARequestUpdate, db: Session = Depends(get_d
 
 
 @router.delete("/{request_id}", status_code=204)
-def delete(request_id: str, db: Session = Depends(get_db)):
+def delete(request_id: str, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """Delete a request."""
-    req = db.query(IPRARequest).filter(IPRARequest.id == request_id).first()
+    req = db.query(IPRARequest).filter(IPRARequest.id == request_id, IPRARequest.user_id == current_user.id).first()
     
     if not req:
         raise HTTPException(status_code=404, detail="Request not found.")
@@ -116,11 +118,11 @@ def delete(request_id: str, db: Session = Depends(get_db)):
 
 
 @router.post("/{request_id}/mark-submitted", response_model=IPRARequestOut)
-def mark_submitted(request_id: str, data: MarkSubmittedInput, db: Session = Depends(get_db)):
+def mark_submitted(request_id: str, data: MarkSubmittedInput, db: Session = Depends(get_db), current_user: User = Depends(get_current_user)):
     """
     Mark a request as submitted and calculate deadlines.
     """
-    req = db.query(IPRARequest).filter(IPRARequest.id == request_id).first()
+    req = db.query(IPRARequest).filter(IPRARequest.id == request_id, IPRARequest.user_id == current_user.id).first()
 
     if not req:
         raise HTTPException(status_code=404, detail="Request not found.")

@@ -11,8 +11,14 @@ psycopg2-binary==2.9.9
 
 # Phase 2: Auth
 python-jose[cryptography]==3.3.0
+bcrypt==4.0.1
 passlib[bcrypt]==1.7.4
 python-dotenv==1.0.1
+
+SECRET_KEY=jkEkmTXQsSAoMab37hZADKFJkcpIiOg-3wi071hxpB4
+ALGORITHM=HS256
+ACCESS_TOKEN_EXPIRE_MINUTES=60
+python-multipart
 
 # Phase 3: AI
 # openai==1.30.1
