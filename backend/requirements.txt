@@ -15,10 +15,9 @@ bcrypt==4.0.1
 passlib[bcrypt]==1.7.4
 python-dotenv==1.0.1
 
-SECRET_KEY=jkEkmTXQsSAoMab37hZADKFJkcpIiOg-3wi071hxpB4
-ALGORITHM=HS256
-ACCESS_TOKEN_EXPIRE_MINUTES=60
+
 python-multipart
 
+email-validator
 # Phase 3: AI
 # openai==1.30.1
