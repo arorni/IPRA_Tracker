@@ -14,19 +14,11 @@ from models.request import IPRARequest
 from dependencies.auth import get_current_user
 
 
-from schemas.request import IPRARequestCreate, IPRARequestUpdate, IPRARequestOut, MarkSubmittedInput
+from schemas.request import IPRARequestCreate, IPRARequestUpdate, IPRARequestOut, MarkSubmittedInput, MarkReceivedInput
 from services.deadline_service import calculate_deadlines
 
-"""from utils.mock_data import (
-    get_all_requests, get_request, create_request, update_request, delete_request
-)"""
 
 router = APIRouter()
-
-"""
-def _to_out(r: dict) -> IPRARequestOut:
-    return IPRARequestOut(**{k: v for k, v in r.items() if k in IPRARequestOut.model_fields})
-"""
 
 @router.get("", response_model=List[IPRARequestOut])
 def list_requests(db: Session=Depends(get_db), current_user: User = Depends(get_current_user)):
@@ -130,15 +122,52 @@ def mark_submitted(request_id: str, data: MarkSubmittedInput, db: Session = Depe
     if req.status == "submitted":
         raise HTTPException(status_code=400, detail="Request is already marked as submitted.")
 
-    deadlines = calculate_deadlines(data.submitted_date)
-
     req.status = "submitted"
     req.submitted_date = data.submitted_date
     req.submission_method = data.submission_method
+    req.submission_url = data.submission_url
+    req.request_identifier = data.request_identifier
+    req.agency_received_date = data.agency_received_date
     req.submission_notes = data.submission_notes
+    if data.agency_received_date:
+        deadlines = calculate_deadlines(data.agency_received_date)
+        req.three_day_deadline = deadlines["three_business_day_deadline"]
+        req.fifteen_day_deadline = deadlines["fifteen_calendar_day_deadline"]
+    else:
+        req.three_day_deadline = None
+        req.fifteen_day_deadline = None
+
+    req.is_overdue = False
+    req.updated_at = datetime.utcnow()
+    db.commit()
+    db.refresh(req)
+    return req
+
+
+@router.post("/{request_id}/mark-received", response_model=IPRARequestOut)
+def mark_received(
+    request_id: str,
+    data: MarkReceivedInput,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    """
+    Mark that the agency received/acknowledged the request and calculate deadlines.
+    """
+    req = db.query(IPRARequest).filter(
+        IPRARequest.id == request_id,
+        IPRARequest.user_id == current_user.id
+    ).first()
+
+    if not req:
+        raise HTTPException(status_code=404, detail="Request not found.")
+
+    req.agency_received_date = data.agency_received_date
+
+    deadlines = calculate_deadlines(data.agency_received_date)
     req.three_day_deadline = deadlines["three_business_day_deadline"]
     req.fifteen_day_deadline = deadlines["fifteen_calendar_day_deadline"]
-    req.is_overdue=False
+
     req.updated_at = datetime.utcnow()
 
     db.commit()

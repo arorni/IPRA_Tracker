@@ -33,6 +33,10 @@ class IPRARequestCreate(BaseModel):
     description: str
     request_text: str
     notes: Optional[str] = None
+    agency_id: Optional[str] = None
+    submission_url: Optional[str] = None
+    request_identifier: Optional[str] = None
+    agency_received_date: Optional[date] = None
 
 
 class IPRARequestUpdate(BaseModel):
@@ -43,12 +47,19 @@ class IPRARequestUpdate(BaseModel):
     request_text: Optional[str] = None
     status: Optional[RequestStatus] = None
     notes: Optional[str] = None
-
+    agency_id: Optional[str] = None
+    submission_url: Optional[str] = None
+    request_identifier: Optional[str] = None
+    agency_received_date: Optional[date] = None
 
 class MarkSubmittedInput(BaseModel):
     submission_method: SubmissionMethod
     submitted_date: date
+    submission_url: Optional[str] = None
+    request_identifier: Optional[str] = None
+    agency_received_date: Optional[date] = None    
     submission_notes: Optional[str] = None
+
 
 
 class IPRARequestOut(BaseModel):
@@ -69,6 +80,13 @@ class IPRARequestOut(BaseModel):
     three_day_deadline: Optional[date]
     fifteen_day_deadline: Optional[date]
     is_overdue: bool
+    agency_id: Optional[str] = None
+    submission_url: Optional[str] = None
+    request_identifier: Optional[str] = None
+    agency_received_date: Optional[date] = None    
     model_config = {
     "from_attributes": True
     }
+
+class MarkReceivedInput(BaseModel):
+    agency_received_date: date

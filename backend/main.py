@@ -5,11 +5,12 @@ Phase 1: Mock data, no real database or auth
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
+from routers import auth, requests, deadlines, documents, ai, agencies
 from database import Base, engine
 from models.request import IPRARequest
 from models.user import User
-from routers import auth, requests, deadlines, documents, ai
+
+from models.agency import Agency
 
 Base.metadata.create_all(bind=engine)
 
@@ -33,7 +34,7 @@ app.include_router(requests.router, prefix="/requests", tags=["requests"])
 app.include_router(deadlines.router, prefix="/requests", tags=["deadlines"])
 app.include_router(documents.router, prefix="/requests", tags=["documents"])
 app.include_router(ai.router, prefix="/ai", tags=["ai"])
-
+app.include_router(agencies.router, prefix="/agencies", tags=["agencies"])
 
 @app.get("/health", tags=["health"])
 def health_check():

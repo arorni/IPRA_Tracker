@@ -1,4 +1,6 @@
 from sqlalchemy import Column, String, Text, Date, DateTime, Boolean, Enum
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import relationship
 from datetime import datetime
 import uuid
 
@@ -18,6 +20,14 @@ class IPRARequest(Base):
         String, 
         nullable=False
     )
+
+    agency_id = Column(
+    String,
+    ForeignKey("agencies.id"),
+    nullable=True
+    )
+
+    agency = relationship("Agency")
 
     title = Column(
         String,
@@ -74,6 +84,26 @@ class IPRARequest(Base):
     submission_method = Column(
         Enum(SubmissionMethod),
         nullable=True
+    )
+
+    submission_url = Column(
+    String,
+    nullable=True
+    )
+
+    request_identifier = Column(
+    String,
+    nullable=True
+    )
+
+    agency_received_date = Column(
+    Date,
+    nullable=True
+    )
+
+    submission_notes = Column(
+    Text, 
+    nullable=True
     )
 
     submission_notes = Column(
