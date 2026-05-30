@@ -14,28 +14,12 @@ export type SubmissionMethod =
   | "phone"
   | "other";
 
-export interface Agency {
-  id: string;
-  name: string;
-  agency_type: string | null;
-  city: string | null;
-  state: string | null;
-  website_url: string | null;
-  nextrequest_url: string | null;
-  ipra_email: string | null;
-  phone: string | null;
-  fax: string | null;
-  notes: string | null;
-}
-
 export interface IPRARequest {
   id: string;
   user_id: string;
   title: string;
-  agency_id?: string | null;
   agency_name: string;
   agency_email: string | null;
-  submission_url?: string | null;
   description: string;
   request_text: string;
   status: RequestStatus;
