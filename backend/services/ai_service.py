@@ -11,15 +11,14 @@ If OPENAI_API_KEY is not set, returns clearly labeled placeholder responses.
 AI SAFETY: This tool does NOT provide legal advice. All AI output is
 clearly labeled as AI-generated. Users should verify all information.
 
-TODO Phase 3: Connect real OpenAI API calls.
 """
 
 import os
 from typing import Optional
 
-# TODO Phase 3: Uncomment and use real OpenAI client
-# from openai import OpenAI
-# client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+from openai import OpenAI
+client = OpenAI(api_key=os.environ.get("OPENAI_API_KEY"))
+model = os.environ.get("OPENAI_MODEL")
 
 DISCLAIMER = (
     "This tool helps draft and track public records requests but does not "
@@ -36,12 +35,29 @@ def improve_request_draft(request_text: str, agency_name: str) -> dict:
     """
     Improve the wording of an IPRA request draft.
     Returns improved text and suggestions.
-
-    TODO Phase 3: Replace placeholder with real OpenAI call.
     """
+    if not request_text or not request_text.strip():
+        return {
+                "success": False,
+                "original_text": request_text,
+                "improved_text":"", 
+                "suggestions":["Please enter request text before using AI Improve."],
+                "is_demo": False, 
+                "disclaimer": DISCLAIMER}
+    if len(request_text) > 5000:
+        return {
+            "success": False,
+            "original_text": request_text,
+            "improved_text": "", 
+            "suggestions":["Request text is too long for AI Improve. Please shorten it before trying again."],
+            "is_demo": False, 
+            "disclaimer": DISCLAIMER
+        }
     if not _ai_available():
         return {
-            "improved_text": request_text,
+            "success":False, 
+            "original_text":request_text,
+            "improved_text": "",
             "suggestions": [
                 "[DEMO OUTPUT] Specify a date range for the records you are requesting.",
                 "[DEMO OUTPUT] Name the specific record type (emails, contracts, reports, etc.).",
@@ -52,16 +68,53 @@ def improve_request_draft(request_text: str, agency_name: str) -> dict:
             "disclaimer": DISCLAIMER,
         }
 
-    # TODO Phase 3: Real AI call
-    # response = client.chat.completions.create(
-    #     model="gpt-4o",
-    #     messages=[
-    #         {"role": "system", "content": "You are an expert in New Mexico IPRA law. ..."},
-    #         {"role": "user", "content": f"Improve this public records request for {agency_name}:\n\n{request_text}"}
-    #     ]
-    # )
-    # return {"improved_text": response.choices[0].message.content, "is_demo": False}
-    pass
+    try:
+        response = client.responses.create(
+           model=model, 
+           instructions=(
+               "You help users improve New Mexico Inspection of Public Records Act "
+                "(IPRA) request drafts. You do not provide legal advice. "
+                "Rewrite the request to be clear, specific, professional, and focused. "
+                "Preserve the user's intent. Do not invent facts, dates, departments, "
+                "people, or record types that the user did not provide. "
+                "If the draft is broad, improve it by making the wording more precise "
+                "without changing the meaning. "
+                "Return only the improved request text, with no markdown heading."
+           ), 
+           input=(
+               f"Agency: {agency_name or 'the agency'}\n\n"
+               f"Original request:\n{request_text}\n\n"
+               "Please improve this public records request."
+           ),
+        )
+
+        improved_text = response.output_text.strip()
+
+        return{
+            "success": True,
+            "original_text":request_text, 
+            "improved_text": improved_text,
+            "suggestions": [
+                "Review the AI-generated text before using it.",
+                "Confirm the dates, departments, names, and record types are accurate.",
+                "Make sure the final request reflects exactly what you want to ask for.",
+                "Do not include greetings, closings, or thank-you language."
+            ],
+            "is_demo": False,
+            "disclaimer": DISCLAIMER,
+        }
+    
+    except Exception as e:
+        return {
+            "success":False,
+            "original_text":request_text,
+            "improved_text": "", 
+            "suggestions":[
+                "AI Improve is temporarily unavailable. Please try again later.",
+            ],
+            "is_demo": False, 
+            "disclaimer": DISCLAIMER
+        }
 
 
 def summarize_document(document_text: str) -> dict:

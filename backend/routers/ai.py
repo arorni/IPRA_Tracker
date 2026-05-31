@@ -1,13 +1,21 @@
 """
 AI service router.
-Returns placeholder responses in Phase 1.
-TODO Phase 3/4/5: Connect real OpenAI API.
+Provides AI-assisted features for IPRA request management.
 """
 
-from fastapi import APIRouter
+from fastapi import APIRouter, Depends
 from pydantic import BaseModel
 from typing import Optional
+
+from sqlalchemy.orm import Session
+from database import get_db
+from dependencies.auth import get_current_user
+from models.user import User
+
+from services.ai_usage_service import check_and_increment_ai_usage
 from services.ai_service import improve_request_draft, summarize_document, suggest_follow_up_requests
+
+
 
 router = APIRouter()
 
@@ -27,11 +35,19 @@ class FollowUpInput(BaseModel):
 
 
 @router.post("/improve-request")
-def improve_request(data: ImproveRequestInput):
+def improve_request(data: ImproveRequestInput, 
+                    db: Session = Depends(get_db),
+                    current_user: User = Depends(get_current_user)):
     """
     Improve an IPRA request draft using AI.
     Returns improved text and specific suggestions.
+    Limited to 3 uses per user per day
     """
+    check_and_increment_ai_usage(
+        db=db, 
+        user_id=current_user.id, 
+        feature_name="improve_request",
+    )
     return improve_request_draft(data.request_text, data.agency_name)
 
 

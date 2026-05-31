@@ -9,6 +9,7 @@ from routers import auth, requests, deadlines, documents, ai, agencies
 from database import Base, engine
 from models.request import IPRARequest
 from models.user import User
+from models.ai_usage import AIUsage
 
 from models.agency import Agency
 
