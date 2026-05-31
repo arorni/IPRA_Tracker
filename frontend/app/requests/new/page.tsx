@@ -148,7 +148,7 @@ export default function NewRequestPage() {
         <div className="mb-5 flex items-start gap-3 bg-green-50 border border-green-200 rounded-xl px-4 py-3">
           <CheckCircle className="w-4 h-4 text-green-600 mt-0.5 shrink-0" />
           <p className="text-sm text-green-800">
-            <strong>Request marked as ready.</strong> Submit it using the agency's preferred method (email, portal, or mail), then return here to mark it as submitted and start deadline tracking.
+            <strong>Request marked as ready.</strong> Submit it using the agency's preferred method (email, portal, or mail), then return here to mark it as submitted.
           </p>
         </div>
       )}
@@ -443,12 +443,13 @@ export default function NewRequestPage() {
             <ol className="space-y-2 text-xs text-slate-500">
               {[
                 "Draft your request",
+                "Select agency",
                 "Use AI Improve to refine wording",
-                "Review and accept or edit the suggestion",
-                "Click Mark as Ready when finalized",
-                "Submit outside the app (email, portal, mail)",
-                "Return here and click Mark as Submitted",
-                "Deadlines begin tracking automatically",
+                "Review and finalize request text",
+                "Submit outside the app (portal, email, fax, mail)",
+                "Mark request as submitted",
+                "Add agency received date when the agency acknowledges receipt",
+                "Deadlines begin from agency received date",
               ].map((step, i) => (
                 <li key={i} className="flex gap-2">
                   <span className="text-brand-500 font-semibold shrink-0">{i + 1}.</span>

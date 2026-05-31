@@ -70,9 +70,16 @@ export const requestsApi = {
     data: {
       submission_method: string;
       submitted_date: string;
+      request_identifier?: string;
+      agency_received_date?: string;
       submission_notes?: string;
     }
   ) => api.post<IPRARequest>(`/requests/${id}/mark-submitted`, data),
+
+  markReceived: (
+    id: string,
+    data: { agency_received_date: string }
+  ) => api.post<IPRARequest>(`/requests/${id}/mark-received`, data),
 };
 
 // ── Deadlines ─────────────────────────────────────────────────────────────────

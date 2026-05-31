@@ -16,16 +16,42 @@ const METHODS: { value: SubmissionMethod; label: string }[] = [
   { value: "online_portal", label: "Online Portal" },
   { value: "mail", label: "Mail" },
   { value: "phone", label: "Phone" },
+  { value: "in_person", label: "In Person" },
   { value: "other", label: "Other" },
+];
+
+// For these methods the agency receives the request immediately — auto-populate received date
+const INSTANT_RECEIVE_METHODS: SubmissionMethod[] = [
+  "email", "online_portal", "phone", "in_person", "other",
 ];
 
 export default function SubmitModal({ request, onClose, onSuccess }: Props) {
   const today = new Date().toISOString().split("T")[0];
   const [method, setMethod] = useState<SubmissionMethod>("email");
   const [submittedDate, setSubmittedDate] = useState(today);
+  const [agencyReceivedDate, setAgencyReceivedDate] = useState(today);
+  const [requestIdentifier, setRequestIdentifier] = useState("");
   const [notes, setNotes] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+
+  const isInstantReceive = INSTANT_RECEIVE_METHODS.includes(method);
+
+  const handleMethodChange = (m: SubmissionMethod) => {
+    setMethod(m);
+    if (INSTANT_RECEIVE_METHODS.includes(m)) {
+      setAgencyReceivedDate(submittedDate);
+    } else {
+      setAgencyReceivedDate("");
+    }
+  };
+
+  const handleSubmittedDateChange = (date: string) => {
+    setSubmittedDate(date);
+    if (isInstantReceive) {
+      setAgencyReceivedDate(date);
+    }
+  };
 
   const handleConfirm = async () => {
     setLoading(true);
@@ -34,6 +60,8 @@ export default function SubmitModal({ request, onClose, onSuccess }: Props) {
       const { data } = await requestsApi.markSubmitted(request.id, {
         submission_method: method,
         submitted_date: submittedDate,
+        request_identifier: requestIdentifier || undefined,
+        agency_received_date: agencyReceivedDate || undefined,
         submission_notes: notes || undefined,
       });
       onSuccess(data);
@@ -46,13 +74,11 @@ export default function SubmitModal({ request, onClose, onSuccess }: Props) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Overlay */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
-      {/* Modal */}
-      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg">
+      <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 sticky top-0 bg-white z-10 rounded-t-2xl">
           <div>
             <h2 className="text-base font-semibold text-slate-900">Confirm Submission</h2>
             <p className="text-sm text-slate-500 mt-0.5 truncate max-w-xs">{request.title}</p>
@@ -64,18 +90,15 @@ export default function SubmitModal({ request, onClose, onSuccess }: Props) {
 
         {/* Body */}
         <div className="px-6 py-5 space-y-5">
-          <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 text-sm text-blue-700">
-            After confirming, deadline tracking will begin automatically based on the submission date.
-          </div>
-
           {/* Submission Method */}
           <div>
             <label className="label">Submission Method</label>
-            <div className="grid grid-cols-2 gap-2 mt-1">
+            <div className="grid grid-cols-2 gap-2 mt-1 sm:grid-cols-3">
               {METHODS.map((m) => (
                 <button
                   key={m.value}
-                  onClick={() => setMethod(m.value)}
+                  type="button"
+                  onClick={() => handleMethodChange(m.value)}
                   className={`px-3 py-2 text-sm rounded-lg border transition-colors text-left font-medium ${
                     method === m.value
                       ? "border-brand-500 bg-brand-50 text-brand-700"
@@ -95,9 +118,48 @@ export default function SubmitModal({ request, onClose, onSuccess }: Props) {
               type="date"
               value={submittedDate}
               max={today}
-              onChange={(e) => setSubmittedDate(e.target.value)}
+              onChange={(e) => handleSubmittedDateChange(e.target.value)}
               className="input"
             />
+          </div>
+
+          {/* Request Identifier */}
+          <div>
+            <label className="label">
+              Request Identifier{" "}
+              <span className="text-slate-400 font-normal">(optional)</span>
+            </label>
+            <input
+              type="text"
+              value={requestIdentifier}
+              onChange={(e) => setRequestIdentifier(e.target.value)}
+              placeholder="e.g. portal confirmation number, email thread ID"
+              className="input"
+            />
+          </div>
+
+          {/* Agency Received Date */}
+          <div>
+            <label className="label">
+              Agency Received Date{" "}
+              <span className="text-slate-400 font-normal">(optional)</span>
+            </label>
+            <input
+              type="date"
+              value={agencyReceivedDate}
+              max={today}
+              onChange={(e) => setAgencyReceivedDate(e.target.value)}
+              className="input"
+            />
+            {method === "mail" ? (
+              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mt-1.5">
+                For mailed requests, the agency received date may differ from the submission date. Record it when known.
+              </p>
+            ) : (
+              <p className="text-xs text-slate-400 mt-1.5">
+                Auto-populated from submission date. Edit if the agency acknowledged receipt on a different date.
+              </p>
+            )}
           </div>
 
           {/* Notes */}
@@ -122,7 +184,7 @@ export default function SubmitModal({ request, onClose, onSuccess }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 sticky bottom-0 bg-white rounded-b-2xl">
           <button onClick={onClose} className="btn-secondary">
             Cancel
           </button>

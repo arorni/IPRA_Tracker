@@ -5,7 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft, Edit2, Trash2, Send, Clock,
-  Calendar, CheckCircle, FileText, Copy, Mail, X, ChevronDown,
+  Calendar, CheckCircle, FileText, Copy, Mail, X, ChevronDown, CalendarCheck,
 } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import StatusBadge from "@/components/ui/StatusBadge";
@@ -25,6 +25,10 @@ export default function RequestDetailPage() {
   const [showSubmitModal, setShowSubmitModal] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [showEmailPreview, setShowEmailPreview] = useState(false);
+  const [showReceiptModal, setShowReceiptModal] = useState(false);
+  const [receiptDate, setReceiptDate] = useState("");
+  const [receiptLoading, setReceiptLoading] = useState(false);
+  const [receiptError, setReceiptError] = useState("");
   const [copied, setCopied] = useState(false);
   const [showStatusDropdown, setShowStatusDropdown] = useState(false);
   const [toast, setToast] = useState<{ msg: string; type: "success" | "error" } | null>(null);
@@ -68,7 +72,28 @@ export default function RequestDetailPage() {
   const handleSubmitSuccess = (updated: IPRARequest) => {
     setRequest(updated);
     setShowSubmitModal(false);
-    setToast({ msg: "Request marked as submitted. Deadline tracking has started.", type: "success" });
+    if (updated.agency_received_date) {
+      setToast({ msg: "Request submitted and agency received date recorded. Deadline tracking has started.", type: "success" });
+    } else {
+      setToast({ msg: "Request marked as submitted. Record the agency received date when the agency acknowledges receipt.", type: "success" });
+    }
+  };
+
+  const handleRecordReceipt = async () => {
+    if (!receiptDate) return;
+    setReceiptLoading(true);
+    setReceiptError("");
+    try {
+      const { data } = await requestsApi.markReceived(id, { agency_received_date: receiptDate });
+      setRequest(data);
+      setShowReceiptModal(false);
+      setReceiptDate("");
+      setToast({ msg: "Agency received date recorded. Deadline tracking has started.", type: "success" });
+    } catch {
+      setReceiptError("Failed to record agency received date. Please try again.");
+    } finally {
+      setReceiptLoading(false);
+    }
   };
 
   const handleCopyRequest = async () => {
@@ -76,6 +101,13 @@ export default function RequestDetailPage() {
     await navigator.clipboard.writeText(request.request_text);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const openReceiptModal = () => {
+    const today = new Date().toISOString().split("T")[0];
+    setReceiptDate(today);
+    setReceiptError("");
+    setShowReceiptModal(true);
   };
 
   if (loading) {
@@ -105,6 +137,9 @@ export default function RequestDetailPage() {
   const isReadyToSubmit = request.status === "ready_to_submit";
   const isSubmitted = request.status === "submitted";
   const isRecordsReceived = request.status === "records_received";
+  const hasAgencyReceivedDate = !!request.agency_received_date;
+  const needsReceiptDate = isSubmitted && !hasAgencyReceivedDate;
+  const today = new Date().toISOString().split("T")[0];
 
   const emailSubject = `IPRA Request: ${request.title}`;
   const emailBody = `${request.request_text}`;
@@ -140,6 +175,13 @@ export default function RequestDetailPage() {
                 <Send className="w-4 h-4" /> Mark as Submitted
               </button>
             </>
+          )}
+
+          {/* Record Agency Receipt — shown when submitted but no received date yet */}
+          {needsReceiptDate && (
+            <button onClick={openReceiptModal} className="btn-primary">
+              <CalendarCheck className="w-4 h-4" /> Record Agency Receipt
+            </button>
           )}
 
           {/* Records received actions */}
@@ -205,17 +247,25 @@ export default function RequestDetailPage() {
         <div className="mb-6 flex items-start gap-3 bg-blue-50 border border-blue-200 rounded-xl px-4 py-3">
           <Send className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
           <p className="text-sm text-blue-800">
-            This request is ready to send. Submit it to the agency via email, online portal, or mail — then return here and click <strong>Mark as Submitted</strong> to start deadline tracking.
+            This request is ready to send. Submit it to the agency via email, online portal, or mail — then return here and click <strong>Mark as Submitted</strong>. Deadlines begin once you record the agency received date.
           </p>
         </div>
       )}
 
-      {/* Submitted — awaiting agency response */}
+      {/* Submitted banner — conditional on agency_received_date */}
       {isSubmitted && (
-        <div className="mb-6 flex items-start gap-3 bg-indigo-50 border border-indigo-200 rounded-xl px-4 py-3">
-          <Clock className="w-4 h-4 text-indigo-500 mt-0.5 shrink-0" />
-          <p className="text-sm text-indigo-800">
-            Awaiting agency response. Deadlines are being tracked. Once records arrive, click <strong>Mark Records Received</strong>.
+        <div className={clsx(
+          "mb-6 flex items-start gap-3 rounded-xl px-4 py-3",
+          hasAgencyReceivedDate
+            ? "bg-green-50 border border-green-200"
+            : "bg-indigo-50 border border-indigo-200"
+        )}>
+          <Clock className={clsx("w-4 h-4 mt-0.5 shrink-0", hasAgencyReceivedDate ? "text-green-500" : "text-indigo-500")} />
+          <p className={clsx("text-sm", hasAgencyReceivedDate ? "text-green-800" : "text-indigo-800")}>
+            {hasAgencyReceivedDate
+              ? <>Deadlines are being tracked from the agency received date. Once records arrive, click <strong>Mark Records Received</strong>.</>
+              : <>Deadlines will begin once the agency received date is recorded. <button onClick={openReceiptModal} className="underline font-medium hover:no-underline">Record it now</button> when the agency acknowledges receipt.</>
+            }
           </p>
         </div>
       )}
@@ -267,9 +317,21 @@ export default function RequestDetailPage() {
                 <div>
                   <p className="text-xs text-slate-400 uppercase tracking-wide font-medium">Method</p>
                   <p className="text-slate-800 mt-0.5 capitalize">
-                    {request.submission_method?.replace("_", " ")}
+                    {request.submission_method?.replace(/_/g, " ")}
                   </p>
                 </div>
+                {request.agency_received_date && (
+                  <div>
+                    <p className="text-xs text-slate-400 uppercase tracking-wide font-medium">Agency Received</p>
+                    <p className="text-slate-800 mt-0.5">{format(new Date(request.agency_received_date), "MMMM d, yyyy")}</p>
+                  </div>
+                )}
+                {request.request_identifier && (
+                  <div>
+                    <p className="text-xs text-slate-400 uppercase tracking-wide font-medium">Request Identifier</p>
+                    <p className="text-slate-800 mt-0.5 font-mono text-xs">{request.request_identifier}</p>
+                  </div>
+                )}
                 {request.submission_notes && (
                   <div className="col-span-2">
                     <p className="text-xs text-slate-400 uppercase tracking-wide font-medium">Notes</p>
@@ -291,7 +353,7 @@ export default function RequestDetailPage() {
             {!request.submitted_date ? (
               <div className="text-center py-4">
                 <p className="text-sm text-slate-400">
-                  Deadlines begin tracking after the request is marked as submitted.
+                  Deadlines begin tracking after the agency received date is recorded.
                 </p>
                 {isReadyToSubmit && (
                   <button
@@ -301,6 +363,18 @@ export default function RequestDetailPage() {
                     <Send className="w-3.5 h-3.5" /> Mark as Submitted
                   </button>
                 )}
+              </div>
+            ) : !hasAgencyReceivedDate ? (
+              <div className="text-center py-4">
+                <p className="text-sm text-slate-400">
+                  Deadlines will begin once the agency received date is recorded.
+                </p>
+                <button
+                  onClick={openReceiptModal}
+                  className="btn-primary mt-3 text-xs"
+                >
+                  <CalendarCheck className="w-3.5 h-3.5" /> Record Agency Receipt
+                </button>
               </div>
             ) : (
               <div className="space-y-3">
@@ -327,8 +401,8 @@ export default function RequestDetailPage() {
                 </div>
 
                 <p className="text-xs text-slate-400 pt-1">
+                  Deadlines calculated from agency received date.
                   Holidays are not currently factored into calculations.
-                  {/* TODO: Add holiday support in Phase 2+ */}
                 </p>
               </div>
             )}
@@ -355,6 +429,14 @@ export default function RequestDetailPage() {
             <h3 className="text-sm font-semibold text-slate-800 mb-3">Actions</h3>
             {isSubmitted ? (
               <>
+                {needsReceiptDate && (
+                  <button
+                    onClick={openReceiptModal}
+                    className="btn-primary w-full justify-center"
+                  >
+                    <CalendarCheck className="w-4 h-4" /> Record Agency Receipt
+                  </button>
+                )}
                 <button
                   onClick={() => { handleMarkRecordsReceived(); }}
                   className="btn-secondary w-full justify-center"
@@ -389,6 +471,61 @@ export default function RequestDetailPage() {
         />
       )}
 
+      {/* Record Agency Receipt Modal */}
+      {showReceiptModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowReceiptModal(false)} />
+          <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-sm">
+            <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100">
+              <div>
+                <h2 className="text-base font-semibold text-slate-900">Record Agency Receipt</h2>
+                <p className="text-sm text-slate-500 mt-0.5">Deadlines begin from this date</p>
+              </div>
+              <button onClick={() => setShowReceiptModal(false)} className="text-slate-400 hover:text-slate-600">
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="px-6 py-5 space-y-4">
+              <div>
+                <label className="label">Agency Received Date</label>
+                <input
+                  type="date"
+                  value={receiptDate}
+                  max={today}
+                  onChange={(e) => setReceiptDate(e.target.value)}
+                  className="input"
+                />
+                <p className="text-xs text-slate-400 mt-1.5">
+                  The date the agency acknowledged receipt of your request.
+                </p>
+              </div>
+              {receiptError && (
+                <p className="text-sm text-red-600 bg-red-50 border border-red-100 rounded-lg px-3 py-2">
+                  {receiptError}
+                </p>
+              )}
+            </div>
+            <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100">
+              <button onClick={() => setShowReceiptModal(false)} className="btn-secondary">
+                Cancel
+              </button>
+              <button
+                onClick={handleRecordReceipt}
+                disabled={receiptLoading || !receiptDate}
+                className="btn-primary"
+              >
+                {receiptLoading ? (
+                  <span className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <CalendarCheck className="w-4 h-4" />
+                )}
+                Save Date
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Email Preview Modal */}
       {showEmailPreview && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
@@ -420,7 +557,7 @@ export default function RequestDetailPage() {
                 </div>
               </div>
               <p className="text-xs text-slate-400">
-                Copy this text and send it to the agency manually. After sending, return here and click <strong>Mark as Submitted</strong>.
+                Copy this text and send it to the agency manually. After sending, return here and click <strong>Mark as Submitted</strong>. Then add the agency received date when acknowledged.
               </p>
             </div>
             <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100">

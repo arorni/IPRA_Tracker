@@ -12,6 +12,7 @@ export type SubmissionMethod =
   | "online_portal"
   | "mail"
   | "phone"
+  | "in_person"
   | "other";
 
 export interface Agency {
@@ -45,6 +46,8 @@ export interface IPRARequest {
   submitted_date: string | null;
   submission_method: string | null;
   submission_notes: string | null;
+  request_identifier?: string | null;
+  agency_received_date?: string | null;
   three_day_deadline: string | null;
   fifteen_day_deadline: string | null;
   is_overdue: boolean;

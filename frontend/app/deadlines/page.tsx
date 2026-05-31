@@ -139,7 +139,7 @@ export default function DeadlinePage() {
       <div className="mb-6">
         <h1 className="page-title">Deadline Tracker</h1>
         <p className="text-sm text-slate-500 mt-0.5">
-          IPRA statutory deadlines for all submitted requests
+          IPRA statutory deadlines for all active requests
         </p>
       </div>
 
@@ -174,7 +174,7 @@ export default function DeadlinePage() {
           <Calendar className="w-12 h-12 text-slate-300 mb-3" />
           <p className="text-base font-medium text-slate-700 mb-1">No deadlines to track</p>
           <p className="text-sm text-slate-400 mb-4">
-            Deadlines appear here once you mark a request as submitted.
+            Deadlines appear here once an agency received date is recorded.
           </p>
           <Link href="/requests" className="btn-secondary">
             View Requests
