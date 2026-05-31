@@ -23,6 +23,7 @@ class SubmissionMethod(str, Enum):
     portal = "online_portal"
     mail = "mail"
     phone = "phone"
+    in_person = "in_person"
     other = "other"
 
 

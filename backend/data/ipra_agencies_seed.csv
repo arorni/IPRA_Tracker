@@ -1,24 +1,72 @@
 ﻿name,agency_type,city ,state,website_url,nextrequest_url,ipra_email,phone,fax,notes
-City of Albuquerque,City Government,Albuquerque,New Mexico,https://www.cabq.gov/,https://nextrequest.cabq.gov/,cityclerkipra@cabq.gov,505-924-3650,505-768-2845,"Accepts requests through ABQ Records/NextRequest, in person, or by mail; official City Clerk pages identify the clerk as chief records custodian."
-City of Las Cruces,City Government,Las Cruces,New Mexico,https://lascruces.gov/,https://lascruces.gov/government/city-clerks-office/public-records-request/,cityclerk@lascruces.gov,575-541-2112,575-541-2117,"Accepts written requests by mail, in person, fax, email, or online portal."
-City of Rio Rancho,City Government,Rio Rancho,New Mexico,https://rrnm.gov/,https://cityofrioranchonm.nextrequest.com/,clerk@rrnm.gov,505-891-5004,505-994-2557,"Accepts NextRequest, email, fax, phone, mail, and in-person requests through the City Clerk."
-Sandoval County,County Government,Sandoval County,New Mexico,https://www.sandovalcountynm.gov/,https://www.sandovalcountynm.gov/Public-Records-Request/,wjohnson@sandovalcountynm.gov,505-867-7551,,"County notice lists GovQA portal as preferred, with written requests accepted at the Legal Department or by email."
-Santa Fe County,County Government,Santa Fe,New Mexico,https://www.sandovalcountynm.gov/,https://santafecountynm.nextrequest.com/,recordscustodian@santafecountynm.gov,505-986-6279,505-986-6362,"Accepts online portal and mailed requests through the County Attorney's Office; separate custodians are listed for Clerk, Sheriff, and GIS records."
-Albuquerque Public Schools,School District,Albuquerque,New Mexico,https://www.aps.edu/,https://aps.nextrequest.com/,custodianofrecords@aps.edu,505-855-9040,505-253-9066,"Accepts NextRequest, fax, mail, and in-person delivery."
-Rio Rancho Public Schools,School District,Rio Rancho,New Mexico,https://www.rrps.net/,https://riorancho.rrps.net/o/rrps/page/doc-management-ipra,melissa.teller@rrps.net,505-962-1244,,Official district IPRA page lists records custodian contact and an online public records request link.
-Sandoval County Sheriff's Office,Sheriff Office,Sandoval County,New Mexico,https://www.sandovalcountynm.gov/elected-officials/scso/,https://www.sandovalcountynm.gov/Public-Records-Request/,sheriffs_office@sandovalcountynm.gov,505-867-7526,505-867-7608,Sheriff's Office services page links the public records portal and lists in-person and mail options for sheriff records.
-Santa Fe County Sheriff's Office,Sheriff Office,Santa Fe,New Mexico,https://www.santafecountynm.gov/sheriff,https://www.santafecountynm.gov/sheriff/sheriffs-divisions,shfrecordsreq@santafecountynm.gov,505-986-2400,505-986-2482,Sheriff page lists IPRA email and additional criteria for video/audio requests.
-New Mexico Department of Finance and Administration,State Agency,,New Mexico,https://www.nmdfa.state.nm.us/,https://www.nmdfa.state.nm.us/legal/ipra-request/,dfaipra.request@dfa.nm.gov,505-827-3013,,IPRA page says requests should use the online form; mail and email are also listed.
-New Mexico Department of Workforce Solutions,State Agency,,New Mexico,https://www.dws.state.nm.us/,https://www.dws.state.nm.us/Inspection-of-Public-Records-Act,ipra.workforce@dws.nm.gov,505-841-8475,,"Official DWS IPRA page lists mail, email, and phone contact for the records custodian."
-New Mexico State Land Office,State Agency,,New Mexico,https://www.nmstatelands.org/,https://www.nmstatelands.org/ipra-request/,SLO.IPRA@nmslo.gov,505-827-5721,505-827-5766,"Official IPRA page lists mail, email, and phone request options; footer lists agency fax."
-New Mexico Institute of Mining and Technology,University,Socorro,New Mexico,https://www.nmt.edu/,https://www.nmt.edu/foia/,foi@nmt.edu,575-835-5374,,"Official public records page lists custodian, email, phone, and physical address."
-New Mexico State University,University,Las Cruces,New Mexico,https://www.nmsu.edu/,https://nmsuedu.justfoia.com/,IPRA@nmsu.edu,575-646-2446,575-646-1469,"Preferred submission is NMSU's IPRA portal; requests also accepted by mail, in person, fax, and email."
-University of New Mexico,University,Albuquerque,New Mexico,https://www.unm.edu/,https://unmipra.nextrequest.com/,unmipra@salud.unm.edu,505-277-5035,,"FAQ requests use of the IPRA portal and also lists mail, email, and phone contact for the Custodian of Public Records."
-Bernalillo County Metropolitan court,Court/Juficiary,Bernalillo,New Mexico,https://nmcourts.gov, https://ipra.nmcourts.gov/,metrrecordscustodian@nmcourts.gov,855-268-7804,,"Centralized state portal. Must select ""Bernalillo County Metropolitan Court"" from the dropdown menu on the submission page."
-Catron County,County Government,Catron,New Mexico,https://www.catroncounty.us/,,,(575) 533-6400,,"A form with name, contact no. and P O has been given"
-Dona Ana County,County Government,Dona Ana,New Mexico,https://www.donaana.gov/,https://recordbook.donaana.gov/newRequest,,,,
-Eddy County,County Government,Eddy ,New Mexico,https://www.co.eddy.nm.us/,https://eddycountynm.nextrequest.com/requests/new,,,,
-Lea County Sherrif's office,Sheriff Office,Lea ,New Mexico,https://www.leacounty.gov/,,lcsorecords@leacounty.net,,575-396-8299,Request method: mail and email
-Los Alamos County,County Government,Los Alamos,New Mexico,https://www.losalamosnm.gov/Home,https://www.losalamosnm.gov/Services/Records-and-Licenses/Inspection-of-Public-Records/Request-Public-Records-Form,inspect-records@lacnm.us,505-663-1891,,"Official county IPRA page lists online, email, and in-person submission paths and identifies the records custodian."
-Rio Arriba County,County Government,Rio Arriba,New Mexico,,,public.requests@rio-arriba.org,505-753-1780,505-753-1258,
-Taos County,County Government,Taos,New Mexico,,,anna.martinez@taoscounty.org,575-737-6380,575-737-6390,
+City of Albuquerque,City Government,Albuquerque,New Mexico,https://www.cabq.gov/,https://nextrequest.cabq.gov/,cityclerkipra@cabq.gov,505-924-3650,505-768-2845,"Accepted submission methods: Online Portal, Email, Fax, Mail, In Person. Official City Clerk is the chief records custodian."
+City of Las Cruces,City Government,Las Cruces,New Mexico,https://lascruces.gov/,https://lascrucesnm.govqa.us/WEBAPP/_rs/(S(btwp451aazb4dx3qu0qt3lbs))/supporthome.aspx,ipra@lascruces.gov,575-541-2112,575-541-2117,"Accepted submission methods: Online Portal, Email, Fax, Mail, In Person.                              Mailing Address:                     Christine Rivera, City Clerk
+City of Las Cruces
+Address: P.O. Box 20000, Las Cruces, NM, 88004"
+City of Rio Rancho,City Government,Rio Rancho,New Mexico,https://rrnm.gov/,https://cityofrioranchonm.nextrequest.com/,clerk@rrnm.gov,505-891-5004,505-994-2557,"Accepted submission methods: Online Portal, Email, Mail, and In -Person Mailing Address:                      Office of the City Clerk, 3200 Civic Center Circle NE, Suite 150, Rio Rancho, New Mexico 87144"
+Sandoval County,County Government,Bernalillo,New Mexico,https://www.sandovalcountynm.gov/,https://www.sandovalcountynm.gov/Public-Records-Request/,wjohnson@sandovalcountynm.gov,505-867-7551,,"Accepted submission methods: Online Portal, Email"
+Santa Fe County,County Government,Santa Fe,New Mexico,https://www.santafecountynm.gov/,https://santafecountynm.nextrequest.com/,recordscustodian@santafecountynm.gov,505-986-6279,,"Accepted submission methods: Online Portal, Mail, and Email                    Mailing Address:                   Santa Fe County Attorney’s Office
+P.O. Box 276 – 102 Grant Avenue, 2nd Floor
+Santa Fe, NM 87504-0276"
+Albuquerque Public Schools,School District,Albuquerque,New Mexico,https://www.aps.edu/,https://aps.nextrequest.com/,custodianofrecords@aps.edu,505-855-9040,505-253-9066,"Accepted submission methods: Online Portal, Fax, Mail, In Person.                                                               Mailing Address:
+APS Custodian of Public Records
+P.O. Box 25704
+Albuquerque, NM 87125     In-Person Delivery Address:
+APS Custodian of Records Office
+6400 Uptown Blvd. NE
+Albuquerque, NM 87110"
+Rio Rancho Public Schools,School District,Rio Rancho,New Mexico,https://www.rrps.net/,https://rrpsnm.justfoia.com/publicportal/home/newrequest,melissa.teller@rrps.net,505-962-1179,505-896-7827,"Accepted submission methods: Online Portal,  Mail.                                 Mailing Address:         Melissa Teller
+500 Laser Rd. NE
+Rio Rancho, NM, 87124"
+Sandoval County Sheriff's Office,Sheriff Office,Bernalillo,New Mexico,https://www.sandovalcountynm.gov/elected-officials/scso/,https://www.sandovalcountynm.gov/Public-Records-Request/,jcastaneda@sandovalcountynm.gov,,,"Accepted submission methods: Online Portal, Email"
+Santa Fe County Sheriff's Office,Sheriff Office,Santa Fe,New Mexico,https://www.santafecountynm.gov/sheriff,https://www.santafecountynm.gov/sheriff/sheriffs-divisions,shfrecordsreq@santafecountynm.gov,505-986-2455,505-986-2410,"Accepted submission methods: Mail and Email         Mailing Address:                   Santa Fe County Sheriff’s Office
+35 Camino Justicia
+Santa Fe, NM 87508          "
+New Mexico Department of Finance and Administration,State Agency,Santa Fe,New Mexico,https://www.nmdfa.state.nm.us/,https://www.nmdfa.state.nm.us/legal/ipra-request/,dfaipra.request@dfa.nm.gov,,,"Accepted submission methods: Online Portal, Mail, and Email                    Mailing Address:                     DFA Office of the Secretary
+407 Galisteo Street
+Santa Fe, NM 87501    "
+New Mexico Department of Workforce Solutions,State Agency,Santa Fe,New Mexico,https://www.dws.state.nm.us/,https://www.dws.state.nm.us/Inspection-of-Public-Records-Act,ipra.workforce@dws.nm.gov,505-841-8475,,"Accepted submission methods: Mail, and Email   Mailing Address:                    Records Custodian for the Department of Workforce Solutions                                  New Mexico Department of Workforce Solutions
+Office of General Counsel
+Attn: Records Custodian
+P.O. Box 1928
+Albuquerque, NM 87103"
+New Mexico State Land Office,State Agency,Santa Fe,New Mexico,https://www.nmstatelands.org/,https://www.nmstatelands.org/ipra-request/,SLO.IPRA@nmslo.gov,505-827-5721,,"Accepted submission methods: Mail, and Email      Mailing Address:                     NM State Land Office, 310 Old Santa Fe Trail, P.O. Box 1148, Santa Fe, NM 87504"
+New Mexico Institute of Mining and Technology,University,Socorro,New Mexico,https://www.nmt.edu/,https://www.nmt.edu/foia/,foi@nmt.edu,575-835-5374,,"Accepted submission methods: Online Portal, Mail, and Email                        Mailing Address:                    Melissa Tull, Controller
+Custodian of Public Records
+Wells Hall Room 106A
+New Mexico Tech
+801 Leroy Place
+Socorro, NM 87801"
+New Mexico State University,University,Las Cruces,New Mexico,https://www.nmsu.edu/,https://nmsuedu.justfoia.com/publicportal/home/newrequest,IPRA@nmsu.edu,575-646-2446,575-646-1469,"Accepted submission methods: Online Portal, Mail, Fax, Email and In-Person                                         Mailing Address:                                      Anna Herrera
+New Mexico State University
+MSC 3UGC, PO Box 30001 Las Cruces, NM 88003-8001 
+IPRA@NMSU.EDU"
+University of New Mexico,University,Albuquerque,New Mexico,https://www.unm.edu/,https://unmipra.nextrequest.com/,unmipra@salud.unm.edu,505-277-5035,,"Accepted submission methods: Online Portal, Mail, Email, and Phone                Mailing Address:         Custodian of Public Records
+MSC05 3440
+Scholes Hall Room 208
+1 University of New Mexico
+Albuquerque, NM 87131-0001                  "
+Bernalillo County Metropolitan court,Court/Juficiary,Albuquerque,New Mexico,https://nmcourts.gov, https://ipra.nmcourts.gov/,metrrecordscustodian@nmcourts.gov,855-268-7804,,"Centralized state portal. Must select ""Bernalillo County Metropolitan Court"" from the dropdown menu on the submission page. Mailing Address:            New Mexico Administrative Office of the Courts
+Attn: Records Custodian
+202 E. Marcy St.
+Santa Fe, NM 87501"
+Catron County,County Government,Reserve,New Mexico,https://www.catroncounty.us/,,,(575) 533-6400,,Accepted submission methods: Mail                          Mail via postal mail to:    Sherry Perez                                         Clerk – PO Box 197
+Dona Ana County,County Government,Las Cruces,New Mexico,https://www.donaana.gov/,https://recordbook.donaana.gov/newRequest,,,,"Accepted submission methods: Online/Mail/In-Person                                          Mailing Address:                                   Doña Ana County
+IPRA Custodian
+845 N. Motel Blvd., Box #17
+Las Cruces, NM 88007"
+Eddy County,County Government,Carlsbad,New Mexico,https://www.co.eddy.nm.us/,https://eddycountynm.nextrequest.com/requests/new,,,,Accepted submission methods:  Online Portal
+Lea County Sherrif's office,Sheriff Office,,,https://www.leacounty.gov/,,lcsorecords@leacounty.net,575-396-6242,575-396-8299,"Request method: mail and email                                          Mailing Address:            Records Request
+Lea County Sheriff's Office
+1417 S. Commercial
+Lovington, NM 88260"
+Lea County ,County Government,Lovington,New Mexico,https://www.leacounty.gov/,, recordsrequest@leacounty.net,575-396-9110,575-396-2093,"Request method: mail and email                                          Mailing Address:            Monica M. Russell, Public Information Officer
+100 N Main Avenue, Suite 4
+Lovington, NM 88260"
+Los Alamos County,County Government,Los Alamos,New Mexico,https://www.losalamosnm.gov/Home,https://www.losalamosnm.gov/Services/Records-and-Licenses/Inspection-of-Public-Records/Request-Public-Records-Form,inspect-records@losalamosnm.gov,505-663-1891,,"Accepted submission methods: Online Portal, Email, and In-Person Mailing Address:                                       Municipal Building
+1000 Central Ave., Ste. 190
+87544"
+Rio Arriba County,County Government,Tierra Amarilla,New Mexico,https://www.rio-arriba.org/Home,,public.requests@rio-arriba.org,505-753-1780,505-753-1258,"Accepted submission methods: Email, Fax, Mail, In Person.                              Mailing Address: RIO ARRIBA COUNTY CLERK’S OFFICE
+Linda J. Padilla, County Clerk
+1122 Industrial Park Road, Española, NM 87532"
+Taos County,County Government,Taos,New Mexico,https://www.taoscounty.org/,https://taoscountynm.nextrequest.com,anna.martinez@taoscounty.org,575-737-6380,575-737-6390,"Accepted submission methods: Online Portal, Mail, Email                              Mailing Address:         Records Custodian, Chief Deputy Clerk, Anna Martinez 105 Albright St, Suite D, Taos, New Mexico, 87571"
