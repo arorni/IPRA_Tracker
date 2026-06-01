@@ -33,10 +33,9 @@ export interface IPRARequest {
   id: string;
   user_id: string;
   title: string;
-  agency_id?: string | null;
+  agency_id: string | null;
   agency_name: string;
   agency_email: string | null;
-  submission_url?: string | null;
   description: string;
   request_text: string;
   status: RequestStatus;
@@ -44,10 +43,11 @@ export interface IPRARequest {
   created_at: string;
   updated_at: string;
   submitted_date: string | null;
+  agency_received_date: string | null;
+  request_identifier: string | null;
   submission_method: string | null;
+  submission_url: string | null;
   submission_notes: string | null;
-  request_identifier?: string | null;
-  agency_received_date?: string | null;
   three_day_deadline: string | null;
   fifteen_day_deadline: string | null;
   is_overdue: boolean;
@@ -62,6 +62,15 @@ export interface DeadlineInfo {
   fifteen_day_status: "not_set" | "pending" | "approaching" | "due_today" | "passed";
   days_until_three_day: number | null;
   days_until_fifteen_day: number | null;
+}
+
+export interface ImproveResponse {
+  success: boolean;
+  original_text: string;
+  improved_text: string;
+  suggestions: string[];
+  is_demo: boolean;
+  disclaimer: string;
 }
 
 export interface UploadedDocument {

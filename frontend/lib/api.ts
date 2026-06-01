@@ -5,7 +5,7 @@
  */
 
 import axios from "axios";
-import type { Agency, IPRARequest, UploadedDocument } from "@/types";
+import type { IPRARequest, UploadedDocument, ImproveResponse, Agency } from "@/types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "/api";
 
@@ -34,13 +34,10 @@ export const authApi = {
   me: () => api.get("/auth/me"),
 };
 
-// ── Agencies ───────────────────────────────────────────────────────────────────
+// ── Agencies ──────────────────────────────────────────────────────────────────
 export const agenciesApi = {
   list: () => api.get<Agency[]>("/agencies"),
-
   get: (id: string) => api.get<Agency>(`/agencies/${id}`),
-
-  create: (data: Partial<Agency>) => api.post<Agency>("/agencies", data),
 };
 
 // ── Requests ──────────────────────────────────────────────────────────────────
@@ -51,9 +48,9 @@ export const requestsApi = {
 
   create: (data: {
     title: string;
-    agency_id?: string;
     agency_name: string;
     agency_email?: string;
+    agency_id?: string;
     submission_url?: string;
     description: string;
     request_text: string;
@@ -70,8 +67,8 @@ export const requestsApi = {
     data: {
       submission_method: string;
       submitted_date: string;
-      request_identifier?: string;
       agency_received_date?: string;
+      request_identifier?: string;
       submission_notes?: string;
     }
   ) => api.post<IPRARequest>(`/requests/${id}/mark-submitted`, data),
@@ -96,7 +93,7 @@ export const documentsApi = {
 // ── AI ────────────────────────────────────────────────────────────────────────
 export const aiApi = {
   improveRequest: (request_text: string, agency_name: string) =>
-    api.post("/ai/improve-request", { request_text, agency_name }),
+    api.post<ImproveResponse>("/ai/improve-request", { request_text, agency_name }),
 
   summarize: (document_text: string) =>
     api.post("/ai/summarize-document", { document_text }),

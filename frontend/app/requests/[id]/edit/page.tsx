@@ -3,16 +3,25 @@
 import { useEffect, useState, FormEvent } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Save, Sparkles, CheckCircle, Copy, ExternalLink } from "lucide-react";
+import { ArrowLeft, Save, Sparkles, CheckCircle, RefreshCw } from "lucide-react";
 import AppLayout from "@/components/layout/AppLayout";
 import AgencyCombobox from "@/components/ui/AgencyCombobox";
 import { requestsApi, agenciesApi, aiApi } from "@/lib/api";
-import type { Agency, IPRARequest } from "@/types";
+import type { IPRARequest, Agency } from "@/types";
 
 type AiState =
   | { stage: "idle" }
   | { stage: "loading" }
-  | { stage: "review"; improvedText: string; suggestions: string[]; isDemo: boolean }
+  | {
+      stage: "review";
+      originalText: string;
+      success: boolean;
+      improvedText: string;
+      suggestions: string[];
+      disclaimer: string;
+      isDemo: boolean;
+    }
+  | { stage: "http_error"; message: string }
   | { stage: "accepted" };
 
 export default function EditRequestPage() {
@@ -21,8 +30,8 @@ export default function EditRequestPage() {
   const [request, setRequest] = useState<IPRARequest | null>(null);
   const [title, setTitle] = useState("");
   const [selectedAgency, setSelectedAgency] = useState<Agency | null>(null);
-  const [agencies, setAgencies] = useState<Agency[]>([]);
-  const [agenciesLoading, setAgenciesLoading] = useState(true);
+  const [agencyInputValue, setAgencyInputValue] = useState("");
+  const [agencyEmail, setAgencyEmail] = useState("");
   const [description, setDescription] = useState("");
   const [requestText, setRequestText] = useState("");
   const [notes, setNotes] = useState("");
@@ -31,41 +40,44 @@ export default function EditRequestPage() {
   const [error, setError] = useState("");
   const [aiState, setAiState] = useState<AiState>({ stage: "idle" });
   const [readyBanner, setReadyBanner] = useState(false);
-  const [copied, setCopied] = useState(false);
 
-  // Load agencies and request in parallel; pre-select agency after both resolve
   useEffect(() => {
-    const agenciesPromise = agenciesApi.list()
-      .then(({ data }) => { setAgencies(data); return data; })
-      .catch(() => [] as Agency[])
-      .finally(() => setAgenciesLoading(false));
+    let cancelled = false;
 
-    const requestPromise = requestsApi.get(id)
-      .then(({ data }) => {
+    requestsApi.get(id)
+      .then(async ({ data }) => {
+        if (cancelled) return;
         setRequest(data);
         setTitle(data.title);
+        setAgencyInputValue(data.agency_name);
+        setAgencyEmail(data.agency_email ?? "");
         setDescription(data.description);
         setRequestText(data.request_text);
         setNotes(data.notes ?? "");
-        return data;
-      })
-      .catch(() => { setError("Failed to load request."); return null; })
-      .finally(() => setLoading(false));
 
-    Promise.all([agenciesPromise, requestPromise]).then(([agencyList, req]) => {
-      if (!req || !agencyList.length) return;
-      // Try to match by agency_id first, then fall back to agency_name
-      const match =
-        (req.agency_id
-          ? agencyList.find((a) => a.id === req.agency_id)
-          : undefined) ??
-        agencyList.find(
-          (a) => a.name.toLowerCase() === req.agency_name.toLowerCase()
-        ) ??
-        null;
-      setSelectedAgency(match);
-    });
+        try {
+          const { data: agencyList } = await agenciesApi.list();
+          if (cancelled) return;
+          const match = agencyList.find(
+            (a) =>
+              (data.agency_id && a.id === data.agency_id) ||
+              a.name.toLowerCase() === data.agency_name.toLowerCase()
+          );
+          if (match) setSelectedAgency(match);
+        } catch {
+          // Agency list unavailable — typed name still pre-populated
+        }
+      })
+      .catch(() => setError("Failed to load request."))
+      .finally(() => { if (!cancelled) setLoading(false); });
+
+    return () => { cancelled = true; };
   }, [id]);
+
+  const handleAgencySelect = (agency: Agency | null) => {
+    setSelectedAgency(agency);
+    if (agency?.ipra_email) setAgencyEmail(agency.ipra_email);
+  };
 
   const handleAiImprove = async () => {
     if (!requestText.trim()) return;
@@ -73,67 +85,60 @@ export default function EditRequestPage() {
     try {
       const { data } = await aiApi.improveRequest(
         requestText,
-        selectedAgency?.name || "the agency"
+        agencyInputValue || "the agency"
       );
       setAiState({
         stage: "review",
-        improvedText: data.improved_text || requestText,
+        originalText: requestText,
+        success: data.success,
+        improvedText: data.improved_text ?? requestText,
         suggestions: data.suggestions ?? [],
+        disclaimer: data.disclaimer ?? "",
         isDemo: data.is_demo ?? false,
       });
-    } catch {
-      setAiState({
-        stage: "review",
-        improvedText: requestText,
-        suggestions: [
-          "Specify a date range for the records you are requesting.",
-          "Name the specific record type (emails, contracts, reports, etc.).",
-          "Reference the relevant department or program name.",
-        ],
-        isDemo: true,
-      });
+    } catch (err: unknown) {
+      const status = (err as { response?: { status?: number } })?.response?.status;
+      if (status === 429) {
+        setAiState({ stage: "http_error", message: "Daily AI Improve limit reached. Please try again tomorrow." });
+      } else if (status === 401) {
+        setAiState({ stage: "http_error", message: "Please log in again before using AI Improve." });
+      } else {
+        setAiState({
+          stage: "review",
+          originalText: requestText,
+          success: false,
+          improvedText: requestText,
+          suggestions: ["AI Improve is unavailable right now. Please try again later."],
+          disclaimer: "",
+          isDemo: false,
+        });
+      }
     }
   };
 
-  const acceptAi = () => {
-    if (aiState.stage !== "review") return;
+  const acceptSuggestion = () => {
+    if (aiState.stage !== "review" || !aiState.success) return;
     setRequestText(aiState.improvedText);
     setAiState({ stage: "accepted" });
   };
 
   const keepOriginal = () => setAiState({ stage: "idle" });
 
-  const editManually = () => {
-    if (aiState.stage !== "review") return;
-    setRequestText(aiState.improvedText);
-    setAiState({ stage: "idle" });
-  };
-
-  const handleCopyRequestText = async () => {
-    try {
-      await navigator.clipboard.writeText(requestText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
-    } catch {
-      /* clipboard unavailable */
-    }
-  };
-
   const handleSave = async (e: FormEvent, markReady = false) => {
     e.preventDefault();
     setError("");
-    if (!title.trim() || !selectedAgency || !requestText.trim()) {
-      setError("Please fill in all required fields, including selecting an agency.");
+    if (!title.trim() || !agencyInputValue.trim() || !requestText.trim()) {
+      setError("Please fill in all required fields.");
       return;
     }
     setSaving(true);
     try {
       const updates: Parameters<typeof requestsApi.update>[1] = {
         title,
-        agency_id: selectedAgency.id,
-        agency_name: selectedAgency.name,
-        agency_email: selectedAgency.ipra_email ?? undefined,
-        submission_url: selectedAgency.nextrequest_url ?? undefined,
+        agency_name: agencyInputValue,
+        agency_email: agencyEmail.trim() || undefined,
+        agency_id: selectedAgency?.id ?? undefined,
+        submission_url: selectedAgency?.nextrequest_url ?? undefined,
         description,
         request_text: requestText,
         notes: notes || undefined,
@@ -154,8 +159,6 @@ export default function EditRequestPage() {
       setSaving(false);
     }
   };
-
-  const submissionUrl = selectedAgency?.nextrequest_url;
 
   if (loading) {
     return (
@@ -206,86 +209,33 @@ export default function EditRequestPage() {
           />
         </div>
 
-        {/* Agency selector */}
         <div>
           <label className="label">Agency <span className="text-red-500">*</span></label>
           <AgencyCombobox
-            agencies={agencies}
-            loading={agenciesLoading}
-            selected={selectedAgency}
-            onSelect={setSelectedAgency}
+            selectedAgency={selectedAgency}
+            onSelect={handleAgencySelect}
+            inputValue={agencyInputValue}
+            onInputChange={setAgencyInputValue}
+            required
           />
+        </div>
 
-          {/* Agency info card */}
-          {selectedAgency && (
-            <div className="mt-3 rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-3">
-              <div className="grid grid-cols-2 gap-x-6 gap-y-3 text-sm">
-                {selectedAgency.agency_type && (
-                  <div>
-                    <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Type</p>
-                    <p className="text-slate-700 mt-0.5">{selectedAgency.agency_type}</p>
-                  </div>
-                )}
-                {(selectedAgency.city || selectedAgency.state) && (
-                  <div>
-                    <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Location</p>
-                    <p className="text-slate-700 mt-0.5">
-                      {[selectedAgency.city, selectedAgency.state].filter(Boolean).join(", ")}
-                    </p>
-                  </div>
-                )}
-                {selectedAgency.ipra_email && (
-                  <div>
-                    <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">IPRA Email</p>
-                    <p className="text-slate-700 mt-0.5 break-all">{selectedAgency.ipra_email}</p>
-                  </div>
-                )}
-                {selectedAgency.phone && (
-                  <div>
-                    <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Phone</p>
-                    <p className="text-slate-700 mt-0.5">{selectedAgency.phone}</p>
-                  </div>
-                )}
-                {selectedAgency.fax && (
-                  <div>
-                    <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Fax</p>
-                    <p className="text-slate-700 mt-0.5">{selectedAgency.fax}</p>
-                  </div>
-                )}
-                {selectedAgency.website_url && (
-                  <div>
-                    <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Website</p>
-                    <a
-                      href={selectedAgency.website_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-brand-600 hover:underline mt-0.5 block truncate text-sm"
-                    >
-                      {selectedAgency.website_url}
-                    </a>
-                  </div>
-                )}
-                {selectedAgency.nextrequest_url && (
-                  <div>
-                    <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Submission Portal</p>
-                    <a
-                      href={selectedAgency.nextrequest_url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-brand-600 hover:underline mt-0.5 block truncate text-sm"
-                    >
-                      {selectedAgency.nextrequest_url}
-                    </a>
-                  </div>
-                )}
-              </div>
-              {selectedAgency.notes && (
-                <div>
-                  <p className="text-xs font-medium text-slate-400 uppercase tracking-wide">Notes</p>
-                  <p className="text-slate-600 mt-0.5 text-xs leading-relaxed">{selectedAgency.notes}</p>
-                </div>
-              )}
-            </div>
+        <div>
+          <label className="label">
+            Agency IPRA Email{" "}
+            <span className="text-slate-400 font-normal">(optional)</span>
+          </label>
+          <input
+            type="email"
+            value={agencyEmail}
+            onChange={(e) => setAgencyEmail(e.target.value)}
+            placeholder="records@agency.gov"
+            className="input"
+          />
+          {selectedAgency?.ipra_email && (
+            <p className="text-xs text-slate-400 mt-1">
+              Auto-filled from agency directory — update if different.
+            </p>
           )}
         </div>
 
@@ -302,30 +252,19 @@ export default function EditRequestPage() {
         <div>
           <div className="flex items-center justify-between mb-1">
             <label className="label mb-0">Request Text <span className="text-red-500">*</span></label>
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={handleCopyRequestText}
-                disabled={!requestText.trim()}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-500 hover:text-slate-700 disabled:opacity-40 transition-colors"
-              >
-                <Copy className="w-3.5 h-3.5" />
-                {copied ? "Copied!" : "Copy Text"}
-              </button>
-              <button
-                type="button"
-                onClick={handleAiImprove}
-                disabled={aiState.stage === "loading" || !requestText.trim()}
-                className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50"
-              >
-                {aiState.stage === "loading" ? (
-                  <span className="w-3 h-3 border border-brand-600 border-t-transparent rounded-full animate-spin" />
-                ) : (
-                  <Sparkles className="w-3.5 h-3.5" />
-                )}
-                {aiState.stage === "loading" ? "Improving..." : "AI Improve"}
-              </button>
-            </div>
+            <button
+              type="button"
+              onClick={handleAiImprove}
+              disabled={aiState.stage === "loading" || !requestText.trim()}
+              className="inline-flex items-center gap-1.5 text-xs font-medium text-brand-600 hover:text-brand-700 disabled:opacity-50"
+            >
+              {aiState.stage === "loading" ? (
+                <span className="w-3 h-3 border border-brand-600 border-t-transparent rounded-full animate-spin" />
+              ) : (
+                <Sparkles className="w-3.5 h-3.5" />
+              )}
+              {aiState.stage === "loading" ? "Improving..." : "AI Improve"}
+            </button>
           </div>
           <textarea
             required
@@ -339,25 +278,58 @@ export default function EditRequestPage() {
           />
         </div>
 
-        {/* AI Review Panel */}
-        {aiState.stage === "review" && (
-          <div className="rounded-xl border border-brand-200 bg-brand-50 overflow-hidden">
-            <div className="flex items-center justify-between px-4 py-3 border-b border-brand-100">
-              <div className="flex items-center gap-2 text-sm font-semibold text-brand-800">
-                <Sparkles className="w-4 h-4" />
-                AI Suggested Version
-                {aiState.isDemo && (
-                  <span className="text-xs font-normal text-brand-500 bg-brand-100 px-2 py-0.5 rounded-full">Demo mode</span>
-                )}
-              </div>
+        {/* AI Panel — http_error */}
+        {aiState.stage === "http_error" && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-amber-100">
+              <Sparkles className="w-4 h-4 text-amber-600" />
+              <span className="text-sm font-semibold text-amber-800">AI Improve</span>
             </div>
             <div className="px-4 py-3 space-y-3">
-              <pre className="text-xs text-brand-900 whitespace-pre-wrap font-sans leading-relaxed bg-white rounded-lg p-3 border border-brand-100 max-h-48 overflow-y-auto">
-                {aiState.improvedText}
-              </pre>
+              <p className="text-sm text-amber-800">{aiState.message}</p>
+              <button
+                type="button"
+                onClick={keepOriginal}
+                className="btn-secondary text-xs px-3 py-1.5"
+              >
+                Dismiss
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* AI Panel — review */}
+        {aiState.stage === "review" && (
+          <div className="rounded-xl border border-brand-200 bg-brand-50 overflow-hidden">
+            <div className="flex items-center gap-2 px-4 py-3 border-b border-brand-100">
+              <Sparkles className="w-4 h-4 text-brand-600" />
+              <span className="text-sm font-semibold text-brand-800">AI Improve</span>
+              {aiState.isDemo && (
+                <span className="text-xs font-normal text-brand-500 bg-brand-100 px-2 py-0.5 rounded-full">Demo mode</span>
+              )}
+            </div>
+            <div className="px-4 py-3 space-y-3">
+              <div>
+                <p className="text-xs font-semibold text-slate-500 mb-1">Your Original Request</p>
+                <pre className="text-xs text-slate-600 whitespace-pre-wrap font-sans leading-relaxed bg-white rounded-lg p-3 border border-slate-200 max-h-32 overflow-y-auto">
+                  {aiState.originalText}
+                </pre>
+              </div>
+
+              {aiState.success && (
+                <div>
+                  <p className="text-xs font-semibold text-brand-700 mb-1">AI Suggested Version</p>
+                  <pre className="text-xs text-brand-900 whitespace-pre-wrap font-sans leading-relaxed bg-white rounded-lg p-3 border border-brand-100 max-h-48 overflow-y-auto">
+                    {aiState.improvedText}
+                  </pre>
+                </div>
+              )}
+
               {aiState.suggestions.length > 0 && (
                 <div>
-                  <p className="text-xs font-semibold text-brand-700 mb-1">Suggestions:</p>
+                  <p className="text-xs font-semibold text-brand-700 mb-1">
+                    {aiState.success ? "Suggestions:" : "Note:"}
+                  </p>
                   <ul className="space-y-0.5">
                     {aiState.suggestions.map((s, i) => (
                       <li key={i} className="text-xs text-brand-700 flex gap-2">
@@ -367,14 +339,33 @@ export default function EditRequestPage() {
                   </ul>
                 </div>
               )}
+
+              {aiState.disclaimer && (
+                <p className="text-xs text-slate-400 italic">{aiState.disclaimer}</p>
+              )}
+
               <div className="flex items-center gap-2 pt-1">
-                <button type="button" onClick={acceptAi} className="btn-primary text-xs px-3 py-1.5">
-                  <CheckCircle className="w-3.5 h-3.5" /> Accept AI Version
+                {aiState.success && (
+                  <button
+                    type="button"
+                    onClick={acceptSuggestion}
+                    className="btn-primary text-xs px-3 py-1.5"
+                  >
+                    <CheckCircle className="w-3.5 h-3.5" /> Accept Suggestion
+                  </button>
+                )}
+                <button
+                  type="button"
+                  onClick={handleAiImprove}
+                  className="btn-secondary text-xs px-3 py-1.5"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" /> Regenerate
                 </button>
-                <button type="button" onClick={editManually} className="btn-secondary text-xs px-3 py-1.5">
-                  Edit Manually
-                </button>
-                <button type="button" onClick={keepOriginal} className="text-xs text-slate-500 hover:text-slate-700 px-2">
+                <button
+                  type="button"
+                  onClick={keepOriginal}
+                  className="text-xs text-slate-500 hover:text-slate-700 px-2"
+                >
                   Keep Original
                 </button>
               </div>
@@ -384,7 +375,7 @@ export default function EditRequestPage() {
 
         {aiState.stage === "accepted" && (
           <div className="flex items-center gap-2 text-xs text-green-700 bg-green-50 border border-green-100 rounded-lg px-3 py-2">
-            <CheckCircle className="w-3.5 h-3.5" /> AI version accepted and applied.
+            <CheckCircle className="w-3.5 h-3.5" /> AI suggestion accepted and applied.
           </div>
         )}
 
@@ -398,7 +389,7 @@ export default function EditRequestPage() {
           />
         </div>
 
-        <div className="flex flex-wrap items-center gap-3 pt-2">
+        <div className="flex items-center gap-3 pt-2">
           <Link href={`/requests/${id}`} className="btn-secondary">
             Cancel
           </Link>
@@ -419,17 +410,6 @@ export default function EditRequestPage() {
             >
               Mark as Ready
             </button>
-          )}
-          {submissionUrl && (
-            <a
-              href={submissionUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="btn-secondary inline-flex items-center gap-1.5"
-            >
-              <ExternalLink className="w-4 h-4" />
-              Open Submission Portal
-            </a>
           )}
         </div>
       </form>

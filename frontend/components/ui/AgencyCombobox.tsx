@@ -1,141 +1,231 @@
 "use client";
 
-import { useState, useRef, useEffect, KeyboardEvent } from "react";
-import { Search, X, ChevronDown } from "lucide-react";
+import { useEffect, useState, useRef } from "react";
+import { Building2, ChevronDown, X, Loader2, Globe, Mail, Phone } from "lucide-react";
+import { agenciesApi } from "@/lib/api";
 import type { Agency } from "@/types";
 
 interface Props {
-  agencies: Agency[];
-  loading: boolean;
-  selected: Agency | null;
+  selectedAgency: Agency | null;
   onSelect: (agency: Agency | null) => void;
+  inputValue: string;
+  onInputChange: (val: string) => void;
+  required?: boolean;
 }
 
-export default function AgencyCombobox({ agencies, loading, selected, onSelect }: Props) {
-  const [query, setQuery] = useState("");
+export default function AgencyCombobox({
+  selectedAgency,
+  onSelect,
+  inputValue,
+  onInputChange,
+  required,
+}: Props) {
+  const [agencies, setAgencies] = useState<Agency[]>([]);
+  const [fetchLoading, setFetchLoading] = useState(false);
   const [open, setOpen] = useState(false);
-  const [highlighted, setHighlighted] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const listRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    function handleClick(e: MouseEvent) {
+    setFetchLoading(true);
+    agenciesApi
+      .list()
+      .then(({ data }) => setAgencies(data))
+      .catch(() => setAgencies([]))
+      .finally(() => setFetchLoading(false));
+  }, []);
+
+  useEffect(() => {
+    const handleOutside = (e: MouseEvent) => {
       if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
         setOpen(false);
       }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
+    };
+    document.addEventListener("mousedown", handleOutside);
+    return () => document.removeEventListener("mousedown", handleOutside);
   }, []);
 
-  const filtered = agencies.filter((a) =>
-    a.name.toLowerCase().includes(query.toLowerCase()) ||
-    (a.city ?? "").toLowerCase().includes(query.toLowerCase()) ||
-    (a.agency_type ?? "").toLowerCase().includes(query.toLowerCase())
-  ).slice(0, 60);
+  const filtered = agencies.filter(
+    (a) =>
+      a.name.toLowerCase().includes(inputValue.toLowerCase()) ||
+      (a.city ?? "").toLowerCase().includes(inputValue.toLowerCase())
+  );
 
   const handleSelect = (agency: Agency) => {
     onSelect(agency);
-    setQuery("");
+    onInputChange(agency.name);
     setOpen(false);
-    setHighlighted(0);
   };
 
   const handleClear = () => {
     onSelect(null);
-    setQuery("");
-    setOpen(false);
-    setTimeout(() => inputRef.current?.focus(), 0);
+    onInputChange("");
   };
 
-  const handleKeyDown = (e: KeyboardEvent<HTMLInputElement>) => {
-    if (!open) {
-      if (e.key === "ArrowDown" || e.key === "Enter") setOpen(true);
-      return;
-    }
-    if (e.key === "ArrowDown") {
-      e.preventDefault();
-      setHighlighted((h) => Math.min(h + 1, filtered.length - 1));
-    } else if (e.key === "ArrowUp") {
-      e.preventDefault();
-      setHighlighted((h) => Math.max(h - 1, 0));
-    } else if (e.key === "Enter") {
-      e.preventDefault();
-      if (filtered[highlighted]) handleSelect(filtered[highlighted]);
-    } else if (e.key === "Escape") {
-      setOpen(false);
-    }
-  };
+  const locationStr = selectedAgency
+    ? [selectedAgency.city, selectedAgency.state].filter(Boolean).join(", ")
+    : "";
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative space-y-2">
+      {/* Input row */}
       <div className="relative">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
         <input
-          ref={inputRef}
           type="text"
-          value={selected ? selected.name : query}
+          required={required}
+          value={inputValue}
           onChange={(e) => {
-            if (selected) onSelect(null);
-            setQuery(e.target.value);
-            setHighlighted(0);
+            onInputChange(e.target.value);
+            if (selectedAgency) onSelect(null);
             setOpen(true);
           }}
           onFocus={() => setOpen(true)}
-          onKeyDown={handleKeyDown}
-          placeholder={loading ? "Loading agencies…" : "Search agencies…"}
-          disabled={loading}
-          className="input pl-9 pr-8"
-          autoComplete="off"
-          aria-autocomplete="list"
-          aria-expanded={open}
+          placeholder="Search agencies…"
+          className="input pr-8"
         />
-        {selected ? (
+        {fetchLoading && (
+          <Loader2 className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 animate-spin pointer-events-none" />
+        )}
+        {!fetchLoading && selectedAgency && (
           <button
             type="button"
             onClick={handleClear}
-            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
-            aria-label="Clear selected agency"
+            className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+            title="Clear selection"
           >
-            <X className="w-4 h-4" />
+            <X className="w-3.5 h-3.5" />
           </button>
-        ) : (
-          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400 pointer-events-none" />
+        )}
+        {!fetchLoading && !selectedAgency && (
+          <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-slate-400 pointer-events-none" />
         )}
       </div>
 
-      {open && !selected && (
-        <div
-          ref={listRef}
-          role="listbox"
-          className="absolute z-50 w-full mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-64 overflow-y-auto"
-        >
-          {loading ? (
-            <p className="px-4 py-3 text-sm text-slate-400">Loading agencies…</p>
-          ) : filtered.length === 0 ? (
-            <p className="px-4 py-3 text-sm text-slate-400">No agencies found.</p>
-          ) : (
-            filtered.map((agency, idx) => (
+      {/* Dropdown */}
+      {open && (
+        <div className="absolute z-50 top-full left-0 right-0 mt-1 bg-white border border-slate-200 rounded-xl shadow-lg max-h-56 overflow-y-auto">
+          {fetchLoading ? (
+            <div className="px-4 py-3 text-sm text-slate-400 flex items-center gap-2">
+              <Loader2 className="w-3.5 h-3.5 animate-spin" /> Loading agencies…
+            </div>
+          ) : filtered.length > 0 ? (
+            filtered.map((agency) => (
               <button
                 key={agency.id}
                 type="button"
-                role="option"
-                aria-selected={idx === highlighted}
                 onClick={() => handleSelect(agency)}
-                onMouseEnter={() => setHighlighted(idx)}
-                className={`w-full text-left px-4 py-2.5 transition-colors border-b border-slate-50 last:border-0 ${
-                  idx === highlighted ? "bg-brand-50" : "hover:bg-slate-50"
-                }`}
+                className="w-full text-left px-4 py-2.5 text-sm hover:bg-slate-50 border-b border-slate-100 last:border-0 transition-colors"
               >
-                <p className="text-sm font-medium text-slate-800">{agency.name}</p>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  {[agency.agency_type, agency.city, agency.state]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </p>
+                <p className="font-medium text-slate-800">{agency.name}</p>
+                {(agency.agency_type || agency.city) && (
+                  <p className="text-xs text-slate-400 mt-0.5">
+                    {[
+                      agency.agency_type,
+                      agency.city && agency.state
+                        ? `${agency.city}, ${agency.state}`
+                        : agency.city,
+                    ]
+                      .filter(Boolean)
+                      .join(" · ")}
+                  </p>
+                )}
               </button>
             ))
+          ) : inputValue.length > 0 ? (
+            <div className="px-4 py-3 text-sm text-slate-400">
+              No agencies found. You can still type the agency name manually.
+            </div>
+          ) : null}
+        </div>
+      )}
+
+      {/* Selected agency details card */}
+      {selectedAgency && (
+        <div className="bg-slate-50 border border-slate-200 rounded-xl p-4 text-xs space-y-2.5">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Building2 className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+            <span className="font-semibold text-slate-700">{selectedAgency.name}</span>
+            {selectedAgency.agency_type && (
+              <span className="bg-slate-200 text-slate-600 px-2 py-0.5 rounded-full">
+                {selectedAgency.agency_type}
+              </span>
+            )}
+            {locationStr && (
+              <span className="text-slate-400">{locationStr}</span>
+            )}
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {selectedAgency.ipra_email && (
+              <div className="flex items-start gap-1.5 text-slate-600">
+                <Mail className="w-3 h-3 text-slate-400 mt-0.5 shrink-0" />
+                <div>
+                  <span className="text-slate-400 block">IPRA Email</span>
+                  <a
+                    href={`mailto:${selectedAgency.ipra_email}`}
+                    className="text-brand-600 hover:underline break-all"
+                  >
+                    {selectedAgency.ipra_email}
+                  </a>
+                </div>
+              </div>
+            )}
+            {selectedAgency.phone && (
+              <div className="flex items-start gap-1.5 text-slate-600">
+                <Phone className="w-3 h-3 text-slate-400 mt-0.5 shrink-0" />
+                <div>
+                  <span className="text-slate-400 block">Phone</span>
+                  {selectedAgency.phone}
+                </div>
+              </div>
+            )}
+            {selectedAgency.fax && (
+              <div className="flex items-start gap-1.5 text-slate-600">
+                <Phone className="w-3 h-3 text-slate-400 mt-0.5 shrink-0" />
+                <div>
+                  <span className="text-slate-400 block">Fax</span>
+                  {selectedAgency.fax}
+                </div>
+              </div>
+            )}
+            {selectedAgency.website_url && (
+              <div className="flex items-start gap-1.5 text-slate-600">
+                <Globe className="w-3 h-3 text-slate-400 mt-0.5 shrink-0" />
+                <div>
+                  <span className="text-slate-400 block">Website</span>
+                  <a
+                    href={selectedAgency.website_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand-600 hover:underline truncate block max-w-[160px]"
+                  >
+                    {selectedAgency.website_url}
+                  </a>
+                </div>
+              </div>
+            )}
+            {selectedAgency.nextrequest_url && (
+              <div className="flex items-start gap-1.5 text-slate-600 sm:col-span-2">
+                <Globe className="w-3 h-3 text-slate-400 mt-0.5 shrink-0" />
+                <div>
+                  <span className="text-slate-400 block">Online Portal (NextRequest)</span>
+                  <a
+                    href={selectedAgency.nextrequest_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-brand-600 hover:underline truncate block"
+                  >
+                    {selectedAgency.nextrequest_url}
+                  </a>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {selectedAgency.notes && (
+            <div className="pt-2 border-t border-slate-200">
+              <span className="text-slate-400 block mb-0.5">Submission Instructions</span>
+              <p className="text-slate-600 leading-relaxed">{selectedAgency.notes}</p>
+            </div>
           )}
         </div>
       )}

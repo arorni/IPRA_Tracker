@@ -14,15 +14,18 @@ interface Props {
 const METHODS: { value: SubmissionMethod; label: string }[] = [
   { value: "email", label: "Email" },
   { value: "online_portal", label: "Online Portal" },
-  { value: "mail", label: "Mail" },
   { value: "phone", label: "Phone" },
   { value: "in_person", label: "In Person" },
+  { value: "mail", label: "Mail" },
   { value: "other", label: "Other" },
 ];
 
-// For these methods the agency receives the request immediately — auto-populate received date
-const INSTANT_RECEIVE_METHODS: SubmissionMethod[] = [
-  "email", "online_portal", "phone", "in_person", "other",
+const AUTO_RECEIPT_METHODS: SubmissionMethod[] = [
+  "email",
+  "online_portal",
+  "phone",
+  "in_person",
+  "other",
 ];
 
 export default function SubmitModal({ request, onClose, onSuccess }: Props) {
@@ -35,21 +38,19 @@ export default function SubmitModal({ request, onClose, onSuccess }: Props) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
 
-  const isInstantReceive = INSTANT_RECEIVE_METHODS.includes(method);
-
-  const handleMethodChange = (m: SubmissionMethod) => {
-    setMethod(m);
-    if (INSTANT_RECEIVE_METHODS.includes(m)) {
-      setAgencyReceivedDate(submittedDate);
-    } else {
+  const handleMethodChange = (val: SubmissionMethod) => {
+    setMethod(val);
+    if (val === "mail") {
       setAgencyReceivedDate("");
+    } else {
+      setAgencyReceivedDate(submittedDate);
     }
   };
 
-  const handleSubmittedDateChange = (date: string) => {
-    setSubmittedDate(date);
-    if (isInstantReceive) {
-      setAgencyReceivedDate(date);
+  const handleSubmittedDateChange = (val: string) => {
+    setSubmittedDate(val);
+    if (method !== "mail") {
+      setAgencyReceivedDate(val);
     }
   };
 
@@ -60,9 +61,9 @@ export default function SubmitModal({ request, onClose, onSuccess }: Props) {
       const { data } = await requestsApi.markSubmitted(request.id, {
         submission_method: method,
         submitted_date: submittedDate,
-        request_identifier: requestIdentifier || undefined,
         agency_received_date: agencyReceivedDate || undefined,
-        submission_notes: notes || undefined,
+        request_identifier: requestIdentifier.trim() || undefined,
+        submission_notes: notes.trim() || undefined,
       });
       onSuccess(data);
     } catch {
@@ -72,13 +73,17 @@ export default function SubmitModal({ request, onClose, onSuccess }: Props) {
     }
   };
 
+  const isMail = method === "mail";
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Overlay */}
       <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={onClose} />
 
+      {/* Modal */}
       <div className="relative bg-white rounded-2xl shadow-xl w-full max-w-lg max-h-[90vh] overflow-y-auto">
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 sticky top-0 bg-white z-10 rounded-t-2xl">
+        <div className="flex items-center justify-between px-6 py-5 border-b border-slate-100 sticky top-0 bg-white z-10">
           <div>
             <h2 className="text-base font-semibold text-slate-900">Confirm Submission</h2>
             <p className="text-sm text-slate-500 mt-0.5 truncate max-w-xs">{request.title}</p>
@@ -90,6 +95,12 @@ export default function SubmitModal({ request, onClose, onSuccess }: Props) {
 
         {/* Body */}
         <div className="px-6 py-5 space-y-5">
+          <div className="bg-blue-50 border border-blue-100 rounded-lg px-4 py-3 text-sm text-blue-700">
+            Deadlines begin from the <strong>agency received date</strong>, not the submission date.
+            For most methods, the agency received date defaults to your submission date.
+            For mail, you can record it later when you receive confirmation.
+          </div>
+
           {/* Submission Method */}
           <div>
             <label className="label">Submission Method</label>
@@ -97,7 +108,6 @@ export default function SubmitModal({ request, onClose, onSuccess }: Props) {
               {METHODS.map((m) => (
                 <button
                   key={m.value}
-                  type="button"
                   onClick={() => handleMethodChange(m.value)}
                   className={`px-3 py-2 text-sm rounded-lg border transition-colors text-left font-medium ${
                     method === m.value
@@ -123,26 +133,15 @@ export default function SubmitModal({ request, onClose, onSuccess }: Props) {
             />
           </div>
 
-          {/* Request Identifier */}
-          <div>
-            <label className="label">
-              Request Identifier{" "}
-              <span className="text-slate-400 font-normal">(optional)</span>
-            </label>
-            <input
-              type="text"
-              value={requestIdentifier}
-              onChange={(e) => setRequestIdentifier(e.target.value)}
-              placeholder="e.g. portal confirmation number, email thread ID"
-              className="input"
-            />
-          </div>
-
           {/* Agency Received Date */}
           <div>
             <label className="label">
               Agency Received Date{" "}
-              <span className="text-slate-400 font-normal">(optional)</span>
+              {isMail ? (
+                <span className="text-slate-400 font-normal">(optional — record later for mail)</span>
+              ) : (
+                <span className="text-slate-400 font-normal">(auto-filled from submission date)</span>
+              )}
             </label>
             <input
               type="date"
@@ -150,22 +149,40 @@ export default function SubmitModal({ request, onClose, onSuccess }: Props) {
               max={today}
               onChange={(e) => setAgencyReceivedDate(e.target.value)}
               className="input"
+              placeholder={isMail ? "Leave blank if not yet received" : undefined}
             />
-            {method === "mail" ? (
-              <p className="text-xs text-amber-600 bg-amber-50 border border-amber-100 rounded-lg px-3 py-2 mt-1.5">
-                For mailed requests, the agency received date may differ from the submission date. Record it when known.
-              </p>
-            ) : (
-              <p className="text-xs text-slate-400 mt-1.5">
-                Auto-populated from submission date. Edit if the agency acknowledged receipt on a different date.
+            {AUTO_RECEIPT_METHODS.includes(method) && (
+              <p className="text-xs text-slate-400 mt-1">
+                Automatically set to the submission date for {METHODS.find(m => m.value === method)?.label.toLowerCase()} submissions.
+                Update if the agency confirmed a different date.
               </p>
             )}
+            {isMail && (
+              <p className="text-xs text-slate-400 mt-1">
+                Leave blank for mail submissions. You can record the receipt date later using "Record Agency Receipt" on the request detail page.
+              </p>
+            )}
+          </div>
+
+          {/* Request Identifier */}
+          <div>
+            <label className="label">
+              Tracking / Reference Number{" "}
+              <span className="text-slate-400 font-normal">(optional)</span>
+            </label>
+            <input
+              type="text"
+              value={requestIdentifier}
+              onChange={(e) => setRequestIdentifier(e.target.value)}
+              placeholder="e.g. IPRA-2024-0042 or confirmation number"
+              className="input"
+            />
           </div>
 
           {/* Notes */}
           <div>
             <label className="label">
-              Notes <span className="text-slate-400 font-normal">(optional)</span>
+              Submission Notes <span className="text-slate-400 font-normal">(optional)</span>
             </label>
             <input
               type="text"
@@ -184,7 +201,7 @@ export default function SubmitModal({ request, onClose, onSuccess }: Props) {
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 sticky bottom-0 bg-white rounded-b-2xl">
+        <div className="flex items-center justify-end gap-3 px-6 py-4 border-t border-slate-100 sticky bottom-0 bg-white">
           <button onClick={onClose} className="btn-secondary">
             Cancel
           </button>
